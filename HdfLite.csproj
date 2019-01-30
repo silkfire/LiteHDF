@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove=".gitignore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.200" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="HDF.PInvoke">
+      <HintPath>..\..\..\..\..\..\.nuget\packages\hdf.pinvoke.netstandard\1.10.200\lib\netstandard2.0\HDF.PInvoke.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
