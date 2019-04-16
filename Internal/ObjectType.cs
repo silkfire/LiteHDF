@@ -1,4 +1,4 @@
-﻿namespace HdfLite.Enums
+﻿namespace HdfLite.Internal
 {
     public enum ObjectType
     {

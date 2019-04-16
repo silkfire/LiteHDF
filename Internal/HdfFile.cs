@@ -1,7 +1,5 @@
-﻿namespace HdfLite.Objects
+﻿namespace HdfLite.Internal
 {
-    using Enums;
-
     using HDF.PInvoke;
 
     using System;
@@ -11,6 +9,8 @@
 
     public class HdfFile : IDisposable
     {
+        public delegate void GroupIterationCallback(string objectName, ObjectType type, ulong creationTimeUnixSeconds);
+
         private readonly long _fileIdentifier;
 
         private static readonly Dictionary<H5O.type_t, ObjectType> _objectTypes = new Dictionary<H5O.type_t, ObjectType>
@@ -27,7 +27,7 @@
 
 
 
-        public void IterateGroup(string groupPath, Action<string, ObjectType, ulong> operation)
+        public void IterateGroup(string groupPath, GroupIterationCallback callback)
         {
             var pos = 0UL;
             H5L.iterate_by_name(_fileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref pos, (long objectId, IntPtr namePtr, ref H5L.info_t info, IntPtr data) =>
@@ -38,7 +38,7 @@
                 H5O.get_info_by_name(_fileIdentifier, $"{groupPath}/{objectName}", ref gInfo);
 
 
-                operation(objectName, _objectTypes[gInfo.type], gInfo.ctime);
+                callback(objectName, _objectTypes[gInfo.type], gInfo.ctime);
 
 
                 return 0;
