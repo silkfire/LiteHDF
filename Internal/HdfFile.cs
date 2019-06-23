@@ -4,14 +4,13 @@
 
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Runtime.InteropServices;
 
 
     public class HdfFile : IDisposable
     {
         public delegate void GroupIterationCallback(string objectName, ObjectType type, ulong creationTimeUnixSeconds);
-
-        private readonly long _fileIdentifier;
 
         private static readonly Dictionary<H5O.type_t, ObjectType> _objectTypes = new Dictionary<H5O.type_t, ObjectType>
         {
@@ -20,9 +19,20 @@
         };
 
 
-        internal HdfFile(string filename)
+        private readonly string _filename;
+
+        public long FileIdentifier { get; }
+
+        internal HdfFile(string filepath)
         {
-            _fileIdentifier = H5F.open(filename, H5F.ACC_RDONLY);
+            // Turn off redundant error logging
+
+            H5E.set_auto(H5E.DEFAULT, null, IntPtr.Zero);
+
+
+            _filename = Path.GetFileName(filepath);
+
+            FileIdentifier = H5F.open(filepath, H5F.ACC_RDONLY);
         }
 
 
@@ -30,12 +40,12 @@
         public void IterateGroup(string groupPath, GroupIterationCallback callback)
         {
             var pos = 0UL;
-            H5L.iterate_by_name(_fileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref pos, (long objectId, IntPtr namePtr, ref H5L.info_t info, IntPtr data) =>
+            H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref pos, (long objectId, IntPtr namePtr, ref H5L.info_t info, IntPtr data) =>
             {
                 var objectName = Marshal.PtrToStringAnsi(namePtr);
 
                 var gInfo = new H5O.info_t();
-                H5O.get_info_by_name(_fileIdentifier, $"{groupPath}/{objectName}", ref gInfo);
+                H5O.get_info_by_name(FileIdentifier, $"{groupPath}/{objectName}", ref gInfo);
 
 
                 callback(objectName, _objectTypes[gInfo.type], gInfo.ctime);
@@ -46,9 +56,17 @@
         }
 
 
-        public Array GetData<T>(string datasetPath)
+        public HdfData GetData<T>(string datasetPath)
         {
-            var datasetId   = H5D.open(_fileIdentifier, datasetPath);
+            var datasetId = H5D.open(FileIdentifier, datasetPath);
+
+            if (datasetId < 0)
+            {
+                // Dataset does not exist
+
+                return null;
+            }
+
             var dataspaceId = H5D.get_space(datasetId);
 
             var rank = H5S.get_simple_extent_ndims(dataspaceId);
@@ -94,14 +112,16 @@
             H5T.close(typeId);
             H5D.close(datasetId);
 
+            var info = new H5O.info_t();
+            H5O.get_info_by_name(FileIdentifier, datasetPath, ref info);
 
-            return dataArray;
+            return new HdfData(datasetPath, info.ctime == 0 ? null as ulong? : info.ctime, dataArray);
         }
 
 
         public string GetString(string datasetPath)
         {
-            var datasetId = H5D.open(_fileIdentifier, datasetPath);
+            var datasetId = H5D.open(FileIdentifier, datasetPath);
             var typeId    = H5D.get_type(datasetId);
 
             Func<IntPtr, string> ptrToString;
@@ -142,17 +162,15 @@
         }
 
 
-
-
-
-
-
         public void Dispose()
         {
-            if (_fileIdentifier != 0L)
+            if (FileIdentifier >= 0L)
             {
-                H5F.close(_fileIdentifier);
+                H5F.close(FileIdentifier);
             }
         }
+
+
+        public override string ToString() => $"{_filename} | {(FileIdentifier < 0L ? "NULL" : FileIdentifier.ToString())}" ;
     }
 }
