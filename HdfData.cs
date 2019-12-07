@@ -1,19 +1,16 @@
 ﻿namespace HdfLite
 {
-    using System;
-
-
-    public class HdfData
+    public class HdfData<TValue>
     {
         public string DatasetPath { get; }
 
         public ulong? ChangeTime { get; }
 
-        public Array Value { get; }
+        public TValue[] Value { get; }
 
 
 
-        public HdfData(string datasetPath, ulong? changeTime, Array value)
+        public HdfData(string datasetPath, ulong? changeTime, TValue[] value)
         {
             DatasetPath = datasetPath;
             ChangeTime = changeTime;

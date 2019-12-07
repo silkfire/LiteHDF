@@ -5,7 +5,9 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Runtime.InteropServices;
+    using System.Text;
 
 
     public class HdfFile : IDisposable
@@ -55,8 +57,8 @@
             }, new IntPtr());
         }
 
-
-        public HdfData GetData<T>(string datasetPath)
+        [Obsolete("Use GetData instead.")]
+        public HdfData<TValue> GetDataOld<TValue>(string datasetPath)
         {
             var datasetId = H5D.open(FileIdentifier, datasetPath);
 
@@ -97,7 +99,7 @@
 
 
 
-            var dataArray = Array.CreateInstance(typeof(T), Array.ConvertAll(dimensionSizes, ds => (long)ds));
+            var dataArray = Array.CreateInstance(typeof(TValue), Array.ConvertAll(dimensionSizes, ds => (long)ds));
 
             var arrayHandle = GCHandle.Alloc(dataArray, GCHandleType.Pinned);
 
@@ -115,14 +117,77 @@
             var info = new H5O.info_t();
             H5O.get_info_by_name(FileIdentifier, datasetPath, ref info);
 
-            return new HdfData(datasetPath, info.ctime == 0 ? null as ulong? : info.ctime, dataArray);
+            return new HdfData<TValue>(datasetPath, info.ctime == 0 ? null as ulong? : info.ctime, dataArray.Cast<TValue>().ToArray());
         }
 
-
-        public string GetString(string datasetPath)
+        public HdfData<TValue> GetData<TValue>(string datasetPath)
+            where TValue : unmanaged
         {
             var datasetId = H5D.open(FileIdentifier, datasetPath);
-            var typeId    = H5D.get_type(datasetId);
+
+            if (datasetId < 0)
+            {
+                // Dataset does not exist
+
+                return null;
+            }
+
+            var dataspaceId = H5D.get_space(datasetId);
+
+            var rank = H5S.get_simple_extent_ndims(dataspaceId);
+
+
+            var dimensionSizes = new ulong[rank];
+
+
+            H5S.get_simple_extent_dims(dataspaceId, dimensionSizes, null);
+
+
+            H5S.close(dataspaceId);
+
+
+            var typeId = H5D.get_type(datasetId);
+
+            var totalLength = rank > 0 ? 1UL : 0;
+
+            for (var i = rank ; i > 0; i--)
+            {
+                totalLength *= dimensionSizes[i - 1];
+            }
+
+            var spanArray = new ReadOnlySpan<TValue>(new TValue[totalLength]);
+
+            unsafe
+            {
+                fixed (TValue* spanPtr = spanArray)
+                {
+                    H5D.read(datasetId, typeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (IntPtr)spanPtr);
+                }
+            }
+
+            H5T.close(typeId);
+            H5D.close(datasetId);
+
+            var info = new H5O.info_t();
+            H5O.get_info_by_name(FileIdentifier, datasetPath, ref info);
+
+            return new HdfData<TValue>(datasetPath, info.ctime == 0 ? null as ulong? : info.ctime, spanArray.ToArray());
+        }
+
+        [Obsolete("Use GetString instead.")]
+        public string GetStringOld(string datasetPath)
+        {
+            var datasetId = H5D.open(FileIdentifier, datasetPath);
+
+
+            if (datasetId < 0)
+            {
+                // Dataset does not exist
+
+                return null;
+            }
+
+            var typeId = H5D.get_type(datasetId);
 
             Func<IntPtr, string> ptrToString;
 
@@ -160,6 +225,50 @@
 
             return strValue;
         }
+
+        
+        public string GetString(string datasetPath)
+        {
+            var datasetId = H5D.open(FileIdentifier, datasetPath);
+
+
+            if (datasetId < 0)
+            {
+                // Dataset does not exist
+
+                return null;
+            }
+
+            var datatypeId = H5D.get_type(datasetId);
+
+            string strValue;
+
+
+            unsafe
+            {
+                var strPtrArray = stackalloc IntPtr[1];
+
+                H5D.read(datasetId, datatypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (IntPtr)strPtrArray);
+
+                var innerStrArray = (byte*)strPtrArray[0];
+
+                var strLen = 0;
+                while (innerStrArray[strLen] != 0)
+                {
+                    strLen++;
+                }
+
+                strValue = Encoding.UTF8.GetString(innerStrArray, strLen);
+            }
+
+            H5T.close(datatypeId);
+            H5D.close(datasetId);
+
+
+            return strValue;
+        }
+
+       
 
 
         public void Dispose()
