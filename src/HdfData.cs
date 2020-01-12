@@ -1,4 +1,4 @@
-﻿namespace HdfLite
+﻿namespace LiteHDF
 {
     public class HdfData<TValue>
     {

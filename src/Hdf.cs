@@ -1,7 +1,6 @@
-﻿namespace HdfLite
+﻿namespace LiteHDF
 {
     using Internal;
-
 
     public static class Hdf
     {

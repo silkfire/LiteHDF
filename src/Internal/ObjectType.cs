@@ -1,4 +1,4 @@
-﻿namespace HdfLite.Internal
+﻿namespace LiteHDF.Internal
 {
     public enum ObjectType
     {

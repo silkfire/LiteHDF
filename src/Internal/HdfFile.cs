@@ -1,4 +1,4 @@
-﻿namespace HdfLite.Internal
+﻿namespace LiteHDF.Internal
 {
     using HDF.PInvoke;
 
@@ -7,7 +7,9 @@
     using System.IO;
     using System.Linq;
     using System.Runtime.InteropServices;
+#if NETSTANDARD2_1
     using System.Text;
+#endif
 
 
     public class HdfFile : IDisposable
@@ -57,8 +59,8 @@
             }, new IntPtr());
         }
 
-        [Obsolete("Use GetData instead.")]
-        public HdfData<TValue> GetDataOld<TValue>(string datasetPath)
+#if NETSTANDARD2_0
+        public HdfData<TValue> GetData<TValue>(string datasetPath)
         {
             var datasetId = H5D.open(FileIdentifier, datasetPath);
 
@@ -120,6 +122,58 @@
             return new HdfData<TValue>(datasetPath, info.ctime == 0 ? null as ulong? : info.ctime, dataArray.Cast<TValue>().ToArray());
         }
 
+        public string GetString(string datasetPath)
+        {
+            var datasetId = H5D.open(FileIdentifier, datasetPath);
+
+
+            if (datasetId < 0)
+            {
+                // Dataset does not exist
+
+                return null;
+            }
+
+            var typeId = H5D.get_type(datasetId);
+
+            Func<IntPtr, string> ptrToString;
+
+            var characterSet = H5T.get_cset(typeId);
+
+            switch (characterSet)
+            {
+                case H5T.cset_t.ASCII:
+                    ptrToString = Marshal.PtrToStringAnsi;
+
+                    break;
+                case H5T.cset_t.UTF8:
+                    ptrToString = Marshal.PtrToStringAuto;
+
+                    break;
+                default:
+                    throw new Exception($"Failed to parse string due to unsupported character set: {characterSet}");
+            }
+
+
+            var strPtrArray = new IntPtr[1];
+
+            var strHandle = GCHandle.Alloc(strPtrArray, GCHandleType.Pinned);
+            H5D.read(datasetId, typeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, strHandle.AddrOfPinnedObject());
+
+            var strValue = ptrToString(strPtrArray[0]);
+
+            H5.free_memory(strPtrArray[0]);
+
+            strHandle.Free();
+
+            H5T.close(typeId);
+            H5D.close(datasetId);
+
+
+            return strValue;
+        }
+
+#elif NETSTANDARD2_1
         public HdfData<TValue> GetData<TValue>(string datasetPath)
             where TValue : unmanaged
         {
@@ -174,59 +228,6 @@
             return new HdfData<TValue>(datasetPath, info.ctime == 0 ? null as ulong? : info.ctime, spanArray.ToArray());
         }
 
-        [Obsolete("Use GetString instead.")]
-        public string GetStringOld(string datasetPath)
-        {
-            var datasetId = H5D.open(FileIdentifier, datasetPath);
-
-
-            if (datasetId < 0)
-            {
-                // Dataset does not exist
-
-                return null;
-            }
-
-            var typeId = H5D.get_type(datasetId);
-
-            Func<IntPtr, string> ptrToString;
-
-            var characterSet = H5T.get_cset(typeId);
-
-            switch (characterSet)
-            {
-                case H5T.cset_t.ASCII:
-                    ptrToString = Marshal.PtrToStringAnsi;
-
-                    break;
-                case H5T.cset_t.UTF8:
-                    ptrToString = Marshal.PtrToStringUTF8;
-
-                    break;
-                default:
-                    throw new Exception($"Failed to parse string due to unsupported character set: {characterSet}");
-            }
-
-
-            var strPtrArray = new IntPtr[1];
-
-            var strHandle = GCHandle.Alloc(strPtrArray, GCHandleType.Pinned);
-            H5D.read(datasetId, typeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, strHandle.AddrOfPinnedObject());
-
-            var strValue = ptrToString(strPtrArray[0]);
-
-            H5.free_memory(strPtrArray[0]);
-
-            strHandle.Free();
-
-            H5T.close(typeId);
-            H5D.close(datasetId);
-
-
-            return strValue;
-        }
-
-        
         public string GetString(string datasetPath)
         {
             var datasetId = H5D.open(FileIdentifier, datasetPath);
@@ -267,8 +268,8 @@
 
             return strValue;
         }
+#endif
 
-       
 
 
         public void Dispose()
