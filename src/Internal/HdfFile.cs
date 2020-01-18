@@ -29,10 +29,7 @@
 
         internal HdfFile(string filepath)
         {
-            // Turn off redundant error logging
-
-            H5E.set_auto(H5E.DEFAULT, null, IntPtr.Zero);
-
+            H5E.set_auto(H5E.DEFAULT, null, IntPtr.Zero);           // Turn off redundant error logging
 
             _filename = Path.GetFileName(filepath);
 
