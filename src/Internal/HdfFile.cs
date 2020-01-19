@@ -248,15 +248,15 @@
 
                 H5D.read(datasetId, datatypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (IntPtr)strPtrArray);
 
-                var innerStrArray = (byte*)strPtrArray[0];
+                var strPtr = (byte*)strPtrArray[0];
 
                 var strLen = 0;
-                while (innerStrArray[strLen] != 0)
+                while (strPtr[strLen] != 0)
                 {
                     strLen++;
                 }
 
-                strValue = Encoding.UTF8.GetString(innerStrArray, strLen);
+                strValue = Encoding.UTF8.GetString(strPtr, strLen);
             }
 
             H5T.close(datatypeId);
