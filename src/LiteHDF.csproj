@@ -2,28 +2,18 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
-    <Description>Lightweight library for reading HDF5 files.</Description>
-    <Company>Gabriel Bider</Company>
     <Authors>Gabriel Bider</Authors>
-    <PackageProjectUrl>https://github.com/silkfire/LiteHDF</PackageProjectUrl>
     <PackageTags>HDF HDF5 hierarchical data format</PackageTags>
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <PackageIconUrl>https://raw.githubusercontent.com/silkfire/LiteHDF/master/img/logo.png</PackageIconUrl>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <Copyright>Copyright © 2020</Copyright>
+    <PackageProjectUrl>https://github.com/silkfire/LiteHDF</PackageProjectUrl>
+    <Description>Lightweight library for reading HDF5 files.</Description>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)'=='netstandard2.1'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove=".gitignore" />
-    <None Include="..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.502" />
