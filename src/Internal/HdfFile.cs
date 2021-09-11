@@ -89,13 +89,13 @@
                 totalLength *= dimensionSizes[i - 1];
             }
 
-            var spanArray = new ReadOnlySpan<TValue>(new TValue[totalLength]);
+            var buffer = new TValue[totalLength];
 
             unsafe
             {
-                fixed (TValue* spanPtr = spanArray)
+                fixed (TValue* bufferPtr = buffer)
                 {
-                    H5D.read(datasetId, typeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (IntPtr)spanPtr);
+                    H5D.read(datasetId, typeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (IntPtr)bufferPtr);
                 }
             }
 
@@ -105,7 +105,7 @@
             var info = new H5O.info_t();
             H5O.get_info_by_name(FileIdentifier, datasetPath, ref info);
 
-            return new HdfData<TValue>(datasetPath, info.ctime == 0 ? null as ulong? : info.ctime, spanArray.ToArray());
+            return new HdfData<TValue>(datasetPath, info.ctime == 0 ? null : info.ctime, buffer);
         }
 
         public string GetString(string datasetPath)
