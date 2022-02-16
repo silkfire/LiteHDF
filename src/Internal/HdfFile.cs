@@ -5,7 +5,6 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Runtime.InteropServices;
     using System.Text;
 
@@ -14,11 +13,11 @@
     {
         public delegate void GroupIterationCallback(string objectName, ObjectType type, ulong creationTimeUnixSeconds);
 
-        private static readonly Dictionary<H5O.type_t, ObjectType> _objectTypes = new Dictionary<H5O.type_t, ObjectType>
-        {
-            [H5O.type_t.GROUP]   = ObjectType.Group,
-            [H5O.type_t.DATASET] = ObjectType.Dataset
-        };
+        private static readonly Dictionary<H5O.type_t, ObjectType> _objectTypes = new()
+                                                                                  {
+                                                                                     [H5O.type_t.GROUP]   = ObjectType.Group,
+                                                                                     [H5O.type_t.DATASET] = ObjectType.Dataset
+                                                                                  };
 
 
         private readonly string _filename;
