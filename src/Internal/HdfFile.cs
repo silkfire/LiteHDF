@@ -1,163 +1,166 @@
-﻿namespace LiteHDF.Internal
+﻿namespace LiteHDF;
+
+using PInvoke;
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
+
+public class HdfFile : IDisposable
 {
-    using HDF.PInvoke;
+    private static readonly Dictionary<H5O.type_t, ObjectType> s_objectTypes = new()
+                                                                               {
+                                                                                   [H5O.type_t.GROUP] = ObjectType.Group,
+                                                                                   [H5O.type_t.DATASET] = ObjectType.Dataset
+                                                                               };
 
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Runtime.InteropServices;
-    using System.Text;
-
-
-    public class HdfFile : IDisposable
+    static HdfFile()
     {
-        public delegate void GroupIterationCallback(string objectName, ObjectType type, ulong creationTimeUnixSeconds);
-
-        private static readonly Dictionary<H5O.type_t, ObjectType> _objectTypes = new()
-                                                                                  {
-                                                                                     [H5O.type_t.GROUP]   = ObjectType.Group,
-                                                                                     [H5O.type_t.DATASET] = ObjectType.Dataset
-                                                                                  };
-
-
-        private readonly string _filename;
-
-        public long FileIdentifier { get; }
-
-        internal HdfFile(string filepath)
-        {
-            H5E.set_auto(H5E.DEFAULT, null, IntPtr.Zero);           // Turn off redundant error logging
-
-            _filename = Path.GetFileName(filepath);
-
-            FileIdentifier = H5F.open(filepath, H5F.ACC_RDONLY);
-        }
-
-
-
-        public void IterateGroup(string groupPath, GroupIterationCallback callback)
-        {
-            var pos = 0UL;
-            H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref pos, (long objectId, IntPtr namePtr, ref H5L.info_t info, IntPtr data) =>
-            {
-                var objectName = Marshal.PtrToStringAnsi(namePtr);
-
-                var gInfo = new H5O.info_t();
-                H5O.get_info_by_name(FileIdentifier, $"{groupPath}/{objectName}", ref gInfo);
-
-
-                callback(objectName, _objectTypes[gInfo.type], gInfo.ctime);
-
-
-                return 0;
-            }, new IntPtr());
-        }
-
-        public HdfData<TValue> GetData<TValue>(string datasetPath)
-            where TValue : unmanaged
-        {
-            var datasetId = H5D.open(FileIdentifier, datasetPath);
-
-            if (datasetId < 0)
-            {
-                // Dataset does not exist
-
-                return null;
-            }
-
-            var dataspaceId = H5D.get_space(datasetId);
-
-            var rank = H5S.get_simple_extent_ndims(dataspaceId);
-
-
-            var dimensionSizes = new ulong[rank];
-
-
-            H5S.get_simple_extent_dims(dataspaceId, dimensionSizes, null);
-
-
-            H5S.close(dataspaceId);
-
-
-            var typeId = H5D.get_type(datasetId);
-
-            var totalLength = rank > 0 ? 1UL : 0;
-
-            for (var i = rank ; i > 0; i--)
-            {
-                totalLength *= dimensionSizes[i - 1];
-            }
-
-            var buffer = new TValue[totalLength];
-
-            unsafe
-            {
-                fixed (TValue* bufferPtr = buffer)
-                {
-                    H5D.read(datasetId, typeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (IntPtr)bufferPtr);
-                }
-            }
-
-            H5T.close(typeId);
-            H5D.close(datasetId);
-
-            var info = new H5O.info_t();
-            H5O.get_info_by_name(FileIdentifier, datasetPath, ref info);
-
-            return new HdfData<TValue>(datasetPath, info.ctime == 0 ? null : info.ctime, buffer);
-        }
-
-        public string GetString(string datasetPath)
-        {
-            var datasetId = H5D.open(FileIdentifier, datasetPath);
-
-
-            if (datasetId < 0)
-            {
-                // Dataset does not exist
-
-                return null;
-            }
-
-            var datatypeId = H5D.get_type(datasetId);
-
-            string strValue;
-
-
-            unsafe
-            {
-                var strPtrArray = stackalloc IntPtr[1];
-
-                H5D.read(datasetId, datatypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (IntPtr)strPtrArray);
-
-                var strPtr = (byte*)strPtrArray[0];
-
-                var strLen = 0;
-                while (strPtr[strLen] != 0)
-                {
-                    strLen++;
-                }
-
-                strValue = Encoding.UTF8.GetString(strPtr, strLen);
-            }
-
-            H5T.close(datatypeId);
-            H5D.close(datasetId);
-
-
-            return strValue;
-        }
-
-
-        public void Dispose()
-        {
-            if (FileIdentifier >= 0L)
-            {
-                H5F.close(FileIdentifier);
-            }
-        }
-
-
-        public override string ToString() => $"{_filename} | {(FileIdentifier < 0L ? "NULL" : FileIdentifier.ToString())}" ;
+        H5.open();
     }
+
+    public string Filename { get; }
+
+    public long FileIdentifier { get; }
+
+    internal HdfFile(string filepath)
+    {
+        H5E.set_auto(H5E.DEFAULT, null, nint.Zero);           // Turn off redundant error logging
+
+        Filename = Path.GetFileName(filepath);
+
+        FileIdentifier = H5F.open(filepath, H5F.ACC_RDONLY, H5P.DEFAULT);
+    }
+
+    public Object[] GetGroupObjectData(string groupPath)
+    {
+        var idx = 0UL;
+        H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, _, _, _) => 0, nint.Zero, H5P.DEFAULT);
+
+        var groupData = new Object[(int)idx];
+        idx = 0;
+        int i = 0;
+        H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, name, _, _) =>
+        {
+            H5O.get_info_by_name(FileIdentifier, $"{groupPath}/{name}", out var oinfo, H5O.H5O_INFO_BASIC, H5P.DEFAULT);
+            groupData[i++] = new Object
+                             {
+                                 Name = name,
+                                 Type = s_objectTypes[oinfo.type],
+                                 File = this
+                             };
+            return 0;
+        }, nint.Zero, H5P.DEFAULT);
+
+        return groupData;
+    }
+
+    public HdfData<TValue> GetData<TValue>(string datasetPath)
+        where TValue : unmanaged
+    {
+        var datasetId = H5D.open(FileIdentifier, datasetPath, H5P.DEFAULT);
+        if (datasetId < 0)
+        {
+            // Dataset does not exist
+
+            return null;
+        }
+
+        var dataspaceId = H5D.get_space(datasetId);
+        var dataspaceClass = H5S.get_simple_extent_type(dataspaceId);
+
+        ulong totalLength;
+
+        switch (dataspaceClass)
+        {
+            case H5S.class_t.NULL:
+                totalLength = 0;
+                break;
+            case H5S.class_t.SCALAR:
+                totalLength = 1;
+
+                break;
+            case H5S.class_t.SIMPLE:
+                totalLength = 1;
+
+                var rank = H5S.get_simple_extent_ndims(dataspaceId);
+                if (rank == 0)
+                {
+                    rank = 1;
+                }
+
+                var dimensionSizes = new ulong[rank];
+
+                H5S.get_simple_extent_dims(dataspaceId, dimensionSizes, null);
+                H5S.close(dataspaceId);
+
+                for (var i = rank; i > 0; i--)
+                {
+                    totalLength *= dimensionSizes[i - 1];
+                }
+
+                break;
+            default:
+                return null;
+        }
+
+        var typeId = H5D.get_type(datasetId);
+
+        var buffer = new TValue[totalLength];
+        unsafe
+        {
+            fixed (TValue* bufferPtr = buffer)
+            {
+                H5D.read(datasetId, typeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (nint)bufferPtr);
+            }
+        }
+
+        H5T.close(typeId);
+        H5D.close(datasetId);
+
+        H5O.get_info_by_name(FileIdentifier, datasetPath, out var oinfo, H5O.H5O_INFO_BASIC | H5O.H5O_INFO_TIME, H5P.DEFAULT);
+
+        return new HdfData<TValue>(datasetPath, oinfo.ctime == 0 ? null : oinfo.ctime, buffer);
+    }
+
+    public string GetString(string datasetPath)
+    {
+        var datasetId = H5D.open(FileIdentifier, datasetPath, H5P.DEFAULT);
+        if (datasetId < 0)
+        {
+            // Dataset does not exist
+
+            return null;
+        }
+
+        var datatypeId = H5D.get_type(datasetId);
+
+        string strValue;
+        unsafe
+        {
+            var strPtrArray = stackalloc nint[1];
+
+            H5D.read(datasetId, datatypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (nint)strPtrArray);
+
+            strValue = Marshal.PtrToStringUTF8(strPtrArray[0]);
+        }
+
+        H5T.close(datatypeId);
+        H5D.close(datasetId);
+
+        return strValue;
+    }
+
+    public void Dispose()
+    {
+        if (FileIdentifier >= 0L)
+        {
+            H5F.close(FileIdentifier);
+        }
+
+        H5.close();
+    }
+
+    public override string ToString() => $"{Filename} | {(FileIdentifier < 0L ? "NULL" : FileIdentifier.ToString())}";
 }

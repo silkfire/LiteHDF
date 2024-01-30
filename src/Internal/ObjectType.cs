@@ -1,8 +1,10 @@
-﻿namespace LiteHDF.Internal
+﻿namespace LiteHDF;
+
+/// <summary>
+/// Defines an object type.
+/// </summary>
+public enum ObjectType
 {
-    public enum ObjectType
-    {
-        Group,
-        Dataset
-    }
+    Group,
+    Dataset
 }
