@@ -31,7 +31,7 @@ internal sealed partial class H5F
     /// </summary>
     /// <param name="file_id">Identifier of a file to which access is terminated.</param>
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Fclose"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Fclose"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t close(hid_t file_id);
 
@@ -43,7 +43,7 @@ internal sealed partial class H5F
     /// <param name="flags">File access flags (<see cref="ACC_RDWR"/> or <see cref="ACC_RDONLY"/>).</param>
     /// <param name="plist">Identifier for the file access properties list.</param>
     /// <returns>Returns a file identifier if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Fopen"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Fopen"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial hid_t open([MarshalUsing(typeof(Utf8StringMarshaller))] string filename, uint flags, hid_t plist);
 }

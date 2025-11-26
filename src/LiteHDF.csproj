@@ -1,21 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <NoWarn>CA1806;IDE1006;CS1591;IDE0290</NoWarn>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <NoWarn>CA1806;IDE1006;CS1591;IDE0290;IDE0130</NoWarn>
+    <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>LiteHDF.win-x64</AssemblyName>
     <Authors>Gabriel Bider</Authors>
     <PackageTags>HDF HDF5 hierarchical data format</PackageTags>
-    <Copyright>Copyright © 2024</Copyright>
+    <Copyright>Copyright © 2026</Copyright>
     <PackageProjectUrl>https://github.com/silkfire/LiteHDF</PackageProjectUrl>
     <Description>Lightweight library for reading HDF5 files.</Description>
     <DocumentationFile>./LiteHDF.win-x64.xml</DocumentationFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>4.0.0</Version>
-    <AssemblyVersion>4.0.0.0</AssemblyVersion>
-    <PackageReleaseNotes>4.0.0 Now only supports .NET 8 on Windows (x64)</PackageReleaseNotes>
+    <Version>5.0.0</Version>
+    <AssemblyVersion>5.0.0.0</AssemblyVersion>
+    <PackageReleaseNotes>5.0.0 Now only supports .NET 10 on Windows (x64); update to HDF5 version 1.10.11</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

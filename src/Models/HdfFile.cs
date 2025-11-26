@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 
-public class HdfFile : IDisposable
+public sealed class HdfFile : IDisposable
 {
     private static readonly Dictionary<H5O.type_t, ObjectType> s_objectTypes = new()
                                                                                {
@@ -39,8 +39,9 @@ public class HdfFile : IDisposable
         H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, _, _, _) => 0, nint.Zero, H5P.DEFAULT);
 
         var groupData = new Object[(int)idx];
+
         idx = 0;
-        int i = 0;
+        var i = 0;
         H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, name, _, _) =>
         {
             H5O.get_info_by_name(FileIdentifier, $"{groupPath}/{name}", out var oinfo, H5O.H5O_INFO_BASIC, H5P.DEFAULT);
@@ -56,7 +57,7 @@ public class HdfFile : IDisposable
         return groupData;
     }
 
-    public HdfData<TValue> GetData<TValue>(string datasetPath)
+    public HdfData<TValue>? GetData<TValue>(string datasetPath)
         where TValue : unmanaged
     {
         var datasetId = H5D.open(FileIdentifier, datasetPath, H5P.DEFAULT);
@@ -121,10 +122,15 @@ public class HdfFile : IDisposable
 
         H5O.get_info_by_name(FileIdentifier, datasetPath, out var oinfo, H5O.H5O_INFO_BASIC | H5O.H5O_INFO_TIME, H5P.DEFAULT);
 
-        return new HdfData<TValue>(datasetPath, oinfo.ctime == 0 ? null : oinfo.ctime, buffer);
+        return new HdfData<TValue>
+               {
+                   DatasetPath = datasetPath,
+                   ChangeTime = oinfo.ctime == 0 ? null : oinfo.ctime,
+                   Value = buffer
+               };
     }
 
-    public string GetString(string datasetPath)
+    public string? GetString(string datasetPath)
     {
         var datasetId = H5D.open(FileIdentifier, datasetPath, H5P.DEFAULT);
         if (datasetId < 0)
@@ -136,7 +142,7 @@ public class HdfFile : IDisposable
 
         var datatypeId = H5D.get_type(datasetId);
 
-        string strValue;
+        string? strValue;
         unsafe
         {
             var strPtrArray = stackalloc nint[1];

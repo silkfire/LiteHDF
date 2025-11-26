@@ -191,9 +191,9 @@ internal sealed partial class H5L
     /// <param name="op_data">User-defined pointer to data required by the application for its processing of the link.</param>
     /// <param name="lapl_id">Link access property list.</param>
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Literate_by_name2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Literate_by_name2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t iterate_by_name(hid_t loc_id, [MarshalUsing(typeof(AnsiStringMarshaller))] string group_name, H5.index_t idx_type, H5.iter_order_t order, ref hsize_t idx, iterate2_t op, nint op_data, hid_t lapl_id);
 
-    
+
 }

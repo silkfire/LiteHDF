@@ -107,7 +107,7 @@ internal static partial class H5T
     /// </summary>
     /// <param name="type_id">Identifier of datatype to release.</param>
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Tclose"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Tclose"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t close(hid_t type_id);
 }

@@ -1,22 +1,12 @@
-namespace LiteHDF.Tests
+namespace LiteHDF.Tests;
+
+public class HdfTests(ITestOutputHelper testOutputHelper)
 {
-    using Xunit.Abstractions;
-
-    public class HdfTests
+    [Fact]
+    public void Should_return_libversion()
     {
-        private readonly ITestOutputHelper _testOutputHelper;
+        var libVersion = Hdf.GetLibraryVersion();
 
-        public HdfTests(ITestOutputHelper testOutputHelper)
-        {
-            _testOutputHelper = testOutputHelper;
-        }
-
-        [Fact]
-        public void Should_return_libversion()
-        {
-            var libVersion = Hdf.GetLibraryVersion();
-
-            _testOutputHelper.WriteLine(libVersion.ToString());
-        }
+        testOutputHelper.WriteLine(libVersion.ToString());
     }
 }

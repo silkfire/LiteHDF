@@ -2,19 +2,11 @@
 
 public class HdfData<TValue>
 {
-    public string DatasetPath { get; }
+    public required string DatasetPath { get; init; }
 
-    public ulong? ChangeTime { get; }
+    public required ulong? ChangeTime { get; init; }
 
-    public TValue[] Value { get; }
-
-    public HdfData(string datasetPath, ulong? changeTime, TValue[] value)
-    {
-        DatasetPath = datasetPath;
-        ChangeTime = changeTime;
-        Value = value;
-    }
-
+    public required TValue[] Value { get; init; }
 
     public override string ToString() => DatasetPath;
 }

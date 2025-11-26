@@ -20,7 +20,7 @@ internal sealed partial class H5D
     /// </summary>
     /// <param name="dset_id">Identifier of the dataset to close access to.</param>
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Dclose"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Dclose"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t close(hid_t dset_id);
 
@@ -30,7 +30,7 @@ internal sealed partial class H5D
     /// </summary>
     /// <param name="dset_id">Identifier of the dataset to query.</param>
     /// <returns>Returns a dataspace identifier if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Dget_space"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Dget_space"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial hid_t get_space(hid_t dset_id);
 
@@ -40,7 +40,7 @@ internal sealed partial class H5D
     /// </summary>
     /// <param name="dset_id">Identifier of the dataset to query.</param>
     /// <returns>Returns a datatype identifier if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Dget_type"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Dget_type"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial hid_t get_type(hid_t dset_id);
 
@@ -52,7 +52,7 @@ internal sealed partial class H5D
     /// <param name="name">Dataset name.</param>
     /// <param name="dapl_id">Dataset access property list.</param>
     /// <returns>Returns a dataset identifier if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Dopen2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Dopen2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial hid_t open(hid_t file_id, [MarshalUsing(typeof(AnsiStringMarshaller))] string name, hid_t dapl_id);
 
@@ -67,7 +67,7 @@ internal sealed partial class H5D
     /// <param name="plist_id">Identifier of a transfer property list for this I/O operation.</param>
     /// <param name="buf">Buffer to receive data read from file.</param>
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Dread"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Dread"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t read(hid_t dset_id, hid_t mem_type_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, size_t buf);
 }

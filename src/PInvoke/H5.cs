@@ -90,7 +90,7 @@ internal sealed partial class H5
     /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5.html#Library-Close" /> for further reference.</para>
     /// </summary>
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5close"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5close"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t close();
 
@@ -99,7 +99,7 @@ internal sealed partial class H5
     /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5.html#Library-Open" /> for further reference.</para>
     /// </summary>
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5open"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5open"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t open();
 
@@ -111,7 +111,7 @@ internal sealed partial class H5
     /// <param name="minnum">The minor version of the library.</param>
     /// <param name="relnum">The release number of the library.</param>
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5get_libversion"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5get_libversion"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t get_libversion(ref uint majnum, ref uint minnum, ref uint relnum);
 }

@@ -21,7 +21,7 @@ internal sealed partial class H5O
     /// Fill in the fileno, addr, type, and rc fields.
     /// </summary>
     public const uint H5O_INFO_BASIC = 0x0001U;
-    
+
     /// <summary>
     /// Fill in the atime, mtime, ctime, and btime fields.
     /// </summary>
@@ -195,18 +195,6 @@ internal sealed partial class H5O
         public H5.ih_info_t attr;
     }
 
-    ///// <summary>
-    ///// Retrieves the metadata for an object, identifying the object by location and relative name.
-    ///// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5O.html#Object-GetInfoByName" /> for further reference.</para>
-    ///// </summary>
-    ///// <param name="loc_id">File or group identifier specifying location of group in which object is located.</param>
-    ///// <param name="name">Name of object, relative to <paramref name="loc_id"/>.</param>
-    ///// <param name="oinfo">Buffer in which to return object information.</param>
-    ///// <param name="lapl_id">Link access property list.</param>
-    ///// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    //[DllImport(Constants.HD5LibraryName, EntryPoint = "H5Oget_info_by_name2", ExactSpelling = true, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    //public static extern herr_t get_info_by_name(hid_t loc_id, string name, ref info1_t oinfo, hid_t lapl_id);
-
     /// <summary>
     /// Retrieves the metadata for an object, identifying the object by location and relative name.
     /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5O.html#Object-GetInfoByName" /> for further reference.</para>
@@ -217,7 +205,7 @@ internal sealed partial class H5O
     /// <param name="fields">Flags specifying the fields to include in <paramref name="oinfo"/>.</param>
     /// <param name="lapl_id">Link access property list.</param>
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Oget_info_by_name2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Oget_info_by_name2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t get_info_by_name(hid_t loc_id, [MarshalUsing(typeof(Utf8StringMarshaller))] string name, out info1_t oinfo, uint fields, hid_t lapl_id);
 }

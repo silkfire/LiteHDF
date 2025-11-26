@@ -29,7 +29,7 @@ internal sealed partial class H5S
         /// <summary>
         /// scalar variable [value = 0].
         /// </summary>
-        /// 
+        ///
         SCALAR = 0,
 
         /// <summary>
@@ -49,7 +49,7 @@ internal sealed partial class H5S
     /// </summary>
     /// <param name="space_id">Identifier of dataspace to release.</param>
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Sclose"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Sclose"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t close(hid_t space_id);
 
@@ -62,9 +62,9 @@ internal sealed partial class H5S
     /// <param name="maxdims">Pointer to array to store the maximum size of each dimension.</param>
     /// <returns>Returns the number of dimensions in the dataspace if successful; otherwise returns a negative value.</returns>
     /// <remarks>Either or both of <paramref name="dims"/> and <paramref name="maxdims"/> may be <c>NULL</c>.</remarks>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Sget_simple_extent_dims"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Sget_simple_extent_dims"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    public static partial int get_simple_extent_dims(hid_t space_id, [Out] hsize_t[] dims, [Out] hsize_t[] maxdims);
+    public static partial int get_simple_extent_dims(hid_t space_id, [Out] hsize_t[] dims, [Out] hsize_t[]? maxdims);
 
     /// <summary>
     /// Determines the dimensionality of a dataspace.
@@ -72,7 +72,7 @@ internal sealed partial class H5S
     /// </summary>
     /// <param name="space_id">Identifier of the dataspace.</param>
     /// <returns>Returns the number of dimensions in the dataspace if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Sget_simple_extent_ndims"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Sget_simple_extent_ndims"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial int get_simple_extent_ndims(hid_t space_id);
 
@@ -82,7 +82,7 @@ internal sealed partial class H5S
     /// </summary>
     /// <param name="space_id">Identifier of the dataspace.</param>
     /// <returns>Returns a dataspace class name if successful; otherwise <see cref="class_t.NO_CLASS"/> (-1).</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Sget_simple_extent_type"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Sget_simple_extent_type"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial class_t get_simple_extent_type(hid_t space_id);
 }

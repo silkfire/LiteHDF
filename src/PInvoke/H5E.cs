@@ -35,7 +35,7 @@ internal sealed partial class H5E
     /// <param name="func">Function to be called upon an error condition.</param>
     /// <param name="client_data">Data passed to the error function.</param>
     /// <returns>Returns a non-negative value on success; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HD5LibraryName, EntryPoint = "H5Eset_auto2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Eset_auto2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    public static partial herr_t set_auto(hid_t estack_id, auto_t func, ssize_t client_data);
+    public static partial herr_t set_auto(hid_t estack_id, auto_t? func, ssize_t client_data);
 }

@@ -2,5 +2,5 @@
 
 internal static class Constants
 {
-    public const string HD5LibraryName = "hdf5";
+    public const string HDF5LibraryName = "hdf5";
 }
