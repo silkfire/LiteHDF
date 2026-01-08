@@ -43,16 +43,16 @@ public sealed class HdfFile : IDisposable
         idx = 0;
         var i = 0;
         H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, name, _, _) =>
-        {
-            H5O.get_info_by_name(FileIdentifier, $"{groupPath}/{name}", out var oinfo, H5O.H5O_INFO_BASIC, H5P.DEFAULT);
-            groupData[i++] = new Object
-                             {
-                                 Name = name,
-                                 Type = s_objectTypes[oinfo.type],
-                                 File = this
-                             };
-            return 0;
-        }, nint.Zero, H5P.DEFAULT);
+                                                                                                         {
+                                                                                                             H5O.get_info_by_name(FileIdentifier, $"{groupPath}/{name}", out var oinfo, H5O.H5O_INFO_BASIC, H5P.DEFAULT);
+                                                                                                             groupData[i++] = new Object
+                                                                                                                              {
+                                                                                                                                  Name = name,
+                                                                                                                                  Type = s_objectTypes[oinfo.type],
+                                                                                                                                  File = this
+                                                                                                                              };
+                                                                                                             return 0;
+                                                                                                         }, nint.Zero, H5P.DEFAULT);
 
         return groupData;
     }
@@ -102,6 +102,7 @@ public sealed class HdfFile : IDisposable
                 }
 
                 break;
+            case H5S.class_t.NO_CLASS:
             default:
                 return null;
         }
@@ -142,15 +143,13 @@ public sealed class HdfFile : IDisposable
 
         var datatypeId = H5D.get_type(datasetId);
 
-        string? strValue;
-        unsafe
-        {
-            var strPtrArray = stackalloc nint[1];
+        var strPtr = nint.Zero;
 
-            H5D.read(datasetId, datatypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (nint)strPtrArray);
+        H5D.read(datasetId, datatypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, ref strPtr);
 
-            strValue = Marshal.PtrToStringUTF8(strPtrArray[0]);
-        }
+        var strValue = Marshal.PtrToStringUTF8(strPtr);
+
+        H5.free_memory(strPtr);
 
         H5T.close(datatypeId);
         H5D.close(datasetId);

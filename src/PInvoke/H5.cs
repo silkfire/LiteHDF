@@ -104,6 +104,16 @@ internal sealed partial class H5
     public static partial herr_t open();
 
     /// <summary>
+    /// Frees memory allocated by the HDF5 library.
+    /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5.html#Library-FreeMemory" /> for further reference.</para>
+    /// </summary>
+    /// <param name="mem">Buffer to be freed. Can be <see langword="null"/>.</param>
+    /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5free_memory"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial herr_t free_memory(nint mem);
+
+    /// <summary>
     /// Returns the HDF library release number.
     /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5.html#Library-Version" /> for further reference.</para>
     /// </summary>

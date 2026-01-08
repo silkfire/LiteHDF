@@ -70,4 +70,19 @@ internal sealed partial class H5D
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Dread"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t read(hid_t dset_id, hid_t mem_type_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, size_t buf);
+
+    /// <summary>
+    /// Reads raw data from a dataset into a buffer.
+    /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5D.html#Dataset-Read" /> for further reference.</para>
+    /// </summary>
+    /// <param name="dset_id">Identifier of the dataset read from.</param>
+    /// <param name="mem_type_id">Identifier of the memory datatype.</param>
+    /// <param name="mem_space_id">Identifier of the memory dataspace.</param>
+    /// <param name="file_space_id">Identifier of the dataset's dataspace in the file.</param>
+    /// <param name="plist_id">Identifier of a transfer property list for this I/O operation.</param>
+    /// <param name="buf">Pointer to buffer to receive data read from file.</param>
+    /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Dread"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial herr_t read(hid_t dset_id, hid_t mem_type_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, ref size_t buf);
 }

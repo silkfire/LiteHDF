@@ -14,9 +14,9 @@
     <DocumentationFile>./LiteHDF.win-x64.xml</DocumentationFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>5.0.0</Version>
-    <AssemblyVersion>5.0.0.0</AssemblyVersion>
-    <PackageReleaseNotes>5.0.0 Now only supports .NET 10 on Windows (x64); update to HDF5 version 1.10.11</PackageReleaseNotes>
+    <Version>5.1.0</Version>
+    <AssemblyVersion>5.1.0.0</AssemblyVersion>
+    <PackageReleaseNotes>5.1.0 Update to HDF5 version 2.0.0</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

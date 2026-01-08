@@ -160,24 +160,6 @@ internal sealed partial class H5L
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate herr_t iterate2_t(hid_t group, [MarshalUsing(typeof(AnsiStringMarshaller))] string name, info2_t info, nint op_data);
 
-    public static string[] GetGroupLinks(hid_t loc_id, string groupName)
-    {
-        var idx = 0UL;
-        iterate_by_name(loc_id, groupName, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, _, _, _) => 0, nint.Zero, H5P.DEFAULT);
-
-        var links = new string[(int)idx];
-        idx = 0;
-        int i = 0;
-        iterate_by_name(loc_id, groupName, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, name, _, _) =>
-        {
-            links[i++] = name;
-
-            return 0;
-        }, nint.Zero, H5P.DEFAULT);
-
-        return links;
-    }
-
     /// <summary>
     /// Iterates through links in a group.
     /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5L.html#Link-IterateByName" /> for further reference.</para>
@@ -194,6 +176,4 @@ internal sealed partial class H5L
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Literate_by_name2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t iterate_by_name(hid_t loc_id, [MarshalUsing(typeof(AnsiStringMarshaller))] string group_name, H5.index_t idx_type, H5.iter_order_t order, ref hsize_t idx, iterate2_t op, nint op_data, hid_t lapl_id);
-
-
 }
