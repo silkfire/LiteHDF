@@ -1,20 +1,51 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <NoWarn>CA1806;IDE1006;CS1591;IDE0290;IDE0130</NoWarn>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>LiteHDF.win-x64</AssemblyName>
     <Authors>Gabriel Bider</Authors>
     <PackageTags>HDF HDF5 hierarchical data format</PackageTags>
-    <Copyright>Copyright © 2022</Copyright>
+    <Copyright>Copyright © 2026</Copyright>
     <PackageProjectUrl>https://github.com/silkfire/LiteHDF</PackageProjectUrl>
     <Description>Lightweight library for reading HDF5 files.</Description>
-    <Version>3.0.0</Version>
-    <AssemblyVersion>3.0.0.0</AssemblyVersion>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <PackageReleaseNotes>3.0.0 Now only supports .NET 6</PackageReleaseNotes>
+    <DocumentationFile>./LiteHDF.win-x64.xml</DocumentationFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <Version>5.1.0</Version>
+    <AssemblyVersion>5.1.0.0</AssemblyVersion>
+    <PackageReleaseNotes>5.1.0 Update to HDF5 version 2.0.0</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HDF.PInvoke.NETStandard" Version="1.10.502" />
+    <None Remove="LiteHDF.csproj.DotSettings" />
+    <None Remove="LiteHDF.win-x64.xml" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ContentWithTargetPath Include="native\*.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>%(Filename)%(Extension)</TargetPath>
+    </ContentWithTargetPath>
+    <None Remove="native\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content CopyToOutputDirectory="PreserveNewest" Include="native/hdf5.dll" Link="hdf5.dll" Pack="true" PackagePath="runtimes/win-x64/native/hdf5.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+      <Visible>False</Visible>
+    </None>
+    <None Include="..\icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+      <Visible>False</Visible>
+    </None>
+  </ItemGroup>
 </Project>

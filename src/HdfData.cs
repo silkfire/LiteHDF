@@ -1,23 +1,12 @@
-﻿namespace LiteHDF
+﻿namespace LiteHDF;
+
+public class HdfData<TValue>
 {
-    public class HdfData<TValue>
-    {
-        public string DatasetPath { get; }
+    public required string DatasetPath { get; init; }
 
-        public ulong? ChangeTime { get; }
+    public required ulong? ChangeTime { get; init; }
 
-        public TValue[] Value { get; }
+    public required TValue[] Value { get; init; }
 
-
-
-        public HdfData(string datasetPath, ulong? changeTime, TValue[] value)
-        {
-            DatasetPath = datasetPath;
-            ChangeTime = changeTime;
-            Value = value;
-        }
-
-
-        public override string ToString() => DatasetPath;
-    }
+    public override string ToString() => DatasetPath;
 }
