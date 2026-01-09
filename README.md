@@ -1,39 +1,51 @@
 # LiteHDF
 
-![logo](https://github.com/silkfire/LiteHDF/blob/master/img/logo.png)
+![logo](https://raw.githubusercontent.com/silkfire/LiteHDF/refs/heads/main/img/logo.png)
 
-[![NuGet](https://img.shields.io/nuget/v/LiteHDF.svg)](https://www.nuget.org/packages/LiteHDF)
+[![NuGet](https://img.shields.io/nuget/v/LiteHDF.win-x64.svg)](https://www.nuget.org/packages/LiteHDF.win-x64)
 
 A tiny high-level library that facilitates the reading of [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format) files.
+
+Uses [v2.0.0](https://github.com/HDFGroup/hdf5/releases/tag/2.0.0) native library under the hood.
+
+**Note**: Only compatible with *Windows x64*.
 
 ## Usage
 
 ```csharp
-using var hdf = Hdf.Open(filepath);
+using var hdf = Hdf.Open(filePath);
 
-if (file.FileIdentifier < 0L)
+if (hdf.FileIdentifier < 0L)
 {
     // File not a valid HDF document
 }
 
-double energyValues = file.GetData<double>($"/entries/data/energies");
+var energyValues = hdf.GetData<double>("/entries/data/energies");
 ```
 
 ### Listing the group structure
 
-Getting the structure of a group (or the root) is done by calling the `IterateGroup` method. The first argument is a path to the group to list and the second argument is a `GroupIterationCallback` delegate:
-
-`void GroupIterationCallback(string objectName, ObjectType type, ulong creationTimeUnixSeconds)`
-
-On every iteration, it will return the name, type (group or dataset) and the creation time (if existent) of the object of the current iteration.
+Getting the structure of a group (or the root) is done by calling the `GetGroupObjectData` method. It returns an array of `Object` structs containing the name, type and a reference to the file of each object in the group.
 
 ```csharp
-hdf.IterateGroup("/entries", (name, type, creationTime) => {
-    // Action to perform on each iteration
+Object[] objects = hdf.GetGroupObjectData("/entries");
+
+foreach (var obj in objects)
+{
+    Console.WriteLine($"{obj.Name} ({obj.Type})");
 }
 ```
 
-The creation time is represented by the number of seconds since the UNIX epoch. Use `DateTimeOffset.FromUnixTimeSeconds(creationTime)` to convert it into a native date time object.
+The `Object` struct has the following properties:
+
+```csharp
+struct Object
+{
+    string Name;        // Name of the object
+    ObjectType Type;    // Group or Dataset
+    HdfFile File;       // Reference to the containing file
+}
+```
 
 ### Reading data
 
@@ -42,12 +54,23 @@ Getting values from a dataset is done by the `GetData<TValue>` or `GetString` me
 The `GetData` method returns a `HdfData<TValue>` object:
 
 ```csharp
-class HdfObject<TValue> {
+class HdfData<TValue>
+{
     string DatasetPath;
     ulong? ChangeTime;
     TValue[] Value;
 }
 ```
 
-If the dataset doesn't exist, a `null` object is returned.  
+The `ChangeTime` property contains the modification time of the dataset as the number of seconds since the UNIX epoch. Use `DateTimeOffset.FromUnixTimeSeconds((long)changeTime)` to convert it into a native date time object.
+
+If the dataset doesn't exist, `null` is returned.  
 For single values, simply use the LINQ method `SingleOrDefault` on the `Value` property.
+
+### Library version
+
+To get the version of the underlying HDF5 library, use the `GetLibraryVersion` method:
+
+```csharp
+Version version = Hdf.GetLibraryVersion();
+```
