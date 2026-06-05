@@ -86,24 +86,6 @@ internal sealed partial class H5
     }
 
     /// <summary>
-    /// Flushes all data to disk, closes all open identifiers, and cleans up memory.
-    /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5.html#Library-Close" /> for further reference.</para>
-    /// </summary>
-    /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5close"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    public static partial herr_t close();
-
-    /// <summary>
-    /// Initializes the HDF5 library.
-    /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5.html#Library-Open" /> for further reference.</para>
-    /// </summary>
-    /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5open"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    public static partial herr_t open();
-
-    /// <summary>
     /// Frees memory allocated by the HDF5 library.
     /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5.html#Library-FreeMemory" /> for further reference.</para>
     /// </summary>

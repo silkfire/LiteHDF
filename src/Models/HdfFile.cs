@@ -15,11 +15,6 @@ public sealed class HdfFile : IDisposable
                                                                                    [H5O.type_t.DATASET] = ObjectType.Dataset
                                                                                };
 
-    static HdfFile()
-    {
-        H5.open();
-    }
-
     public string Filename { get; }
 
     public long FileIdentifier { get; }
@@ -170,8 +165,6 @@ public sealed class HdfFile : IDisposable
         {
             H5F.close(FileIdentifier);
         }
-
-        H5.close();
     }
 
     public override string ToString() => $"{Filename} | {(FileIdentifier < 0L ? "NULL" : FileIdentifier.ToString())}";
