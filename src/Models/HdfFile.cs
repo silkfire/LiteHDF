@@ -30,28 +30,24 @@ public sealed class HdfFile : IDisposable
         FileIdentifier = H5F.open(filepath, H5F.ACC_RDONLY, H5P.DEFAULT);
     }
 
-    public Object[] GetGroupObjectData(string groupPath)
+    public HdfObject[] GetGroupObjectData(string groupPath)
     {
+        List<HdfObject> groupData = [];
+
         var idx = 0UL;
-        H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, _, _, _) => 0, nint.Zero, H5P.DEFAULT);
-
-        var groupData = new Object[(int)idx];
-
-        idx = 0;
-        var i = 0;
         H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, name, _, _) =>
                                                                                                          {
                                                                                                              H5O.get_info_by_name(FileIdentifier, $"{groupPath}/{name}", out var oinfo, H5O.H5O_INFO_BASIC, H5P.DEFAULT);
-                                                                                                             groupData[i++] = new Object
-                                                                                                                              {
-                                                                                                                                  Name = name,
-                                                                                                                                  Type = s_objectTypes[oinfo.type],
-                                                                                                                                  File = this
-                                                                                                                              };
+                                                                                                             groupData.Add(new HdfObject
+                                                                                                                           {
+                                                                                                                               Name = name,
+                                                                                                                               Type = s_objectTypes[oinfo.type],
+                                                                                                                               File = this
+                                                                                                                           });
                                                                                                              return 0;
                                                                                                          }, nint.Zero, H5P.DEFAULT);
 
-        return groupData;
+        return groupData.ToArray();
     }
 
     public HdfData<TValue>? GetData<TValue>(string datasetPath)
