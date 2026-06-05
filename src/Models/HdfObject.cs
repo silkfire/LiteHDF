@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents an HDF5 object (group or dataset).
 /// </summary>
-public readonly struct Object
+public readonly struct HdfObject
 {
     /// <summary>
     /// Name of the object.
@@ -21,5 +21,6 @@ public readonly struct Object
     public required HdfFile File { get; init; }
 
 
+    /// <inheritdoc/>
     public override string ToString() => $"{Name} · {Type.ToString().ToUpperInvariant()}";
 }

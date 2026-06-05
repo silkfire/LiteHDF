@@ -7,6 +7,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 
+/// <summary>
+/// Represents an open HDF5 file. Dispose when done to release the native file handle.
+/// </summary>
 public sealed class HdfFile : IDisposable
 {
     private static readonly Dictionary<H5O.type_t, ObjectType> s_objectTypes = new()
@@ -17,8 +20,14 @@ public sealed class HdfFile : IDisposable
 
     private bool _disposed;
 
+    /// <summary>
+    /// File name (without directory path) of the open HDF5 file.
+    /// </summary>
     public string Filename { get; }
 
+    /// <summary>
+    /// Native HDF5 file identifier returned by <c>H5Fopen</c>. Negative if the file failed to open.
+    /// </summary>
     public long FileIdentifier { get; }
 
     internal HdfFile(string filepath)
@@ -28,8 +37,18 @@ public sealed class HdfFile : IDisposable
         Filename = Path.GetFileName(filepath);
 
         FileIdentifier = H5F.open(filepath, H5F.ACC_RDONLY, H5P.DEFAULT);
+
+        if (FileIdentifier < 0)
+        {
+            throw new IOException($"Failed to open HDF5 file: {filepath}");
+        }
     }
 
+    /// <summary>
+    /// Returns metadata for all objects (groups and datasets) directly within a group.
+    /// </summary>
+    /// <param name="groupPath">Absolute path to the group within the file.</param>
+    /// <returns>An array of <see cref="HdfObject"/> describing each child object.</returns>
     public HdfObject[] GetGroupObjectData(string groupPath)
     {
         List<HdfObject> groupData = [];
@@ -50,6 +69,15 @@ public sealed class HdfFile : IDisposable
         return groupData.ToArray();
     }
 
+    /// <summary>
+    /// Reads a numeric dataset into a typed array.
+    /// </summary>
+    /// <typeparam name="TValue">Unmanaged element type. Must match the byte size of the file's datatype.</typeparam>
+    /// <param name="datasetPath">Absolute path to the dataset within the file.</param>
+    /// <returns>
+    /// An <see cref="HdfData{TValue}"/> containing the data, or <see langword="null"/> if the dataset does not exist,
+    /// has an unsupported dataspace class, or <typeparamref name="TValue"/> does not match the file datatype's element size.
+    /// </returns>
     public HdfData<TValue>? GetData<TValue>(string datasetPath)
         where TValue : unmanaged
     {
@@ -174,8 +202,10 @@ public sealed class HdfFile : IDisposable
         return strValue;
     }
 
+    /// <inheritdoc/>
     ~HdfFile() => Dispose();
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         if (_disposed) return;
@@ -189,5 +219,6 @@ public sealed class HdfFile : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    /// <inheritdoc/>
     public override string ToString() => $"{Filename} | {(FileIdentifier < 0L ? "NULL" : FileIdentifier.ToString())}";
 }
