@@ -69,42 +69,49 @@ public sealed class HdfFile : IDisposable
         }
 
         var dataspaceId = H5D.get_space(datasetId);
-        var dataspaceClass = H5S.get_simple_extent_type(dataspaceId);
 
         ulong totalLength;
 
-        switch (dataspaceClass)
+        try
         {
-            case H5S.class_t.NULL:
-                totalLength = 0;
-                break;
-            case H5S.class_t.SCALAR:
-                totalLength = 1;
+            var dataspaceClass = H5S.get_simple_extent_type(dataspaceId);
 
-                break;
-            case H5S.class_t.SIMPLE:
-                totalLength = 1;
+            switch (dataspaceClass)
+            {
+                case H5S.class_t.NULL:
+                    totalLength = 0;
+                    break;
+                case H5S.class_t.SCALAR:
+                    totalLength = 1;
+                    break;
+                case H5S.class_t.SIMPLE:
+                    totalLength = 1;
 
-                var rank = H5S.get_simple_extent_ndims(dataspaceId);
-                if (rank == 0)
-                {
-                    rank = 1;
-                }
+                    var rank = H5S.get_simple_extent_ndims(dataspaceId);
+                    if (rank == 0)
+                    {
+                        rank = 1;
+                    }
 
-                var dimensionSizes = new ulong[rank];
+                    var dimensionSizes = new ulong[rank];
 
-                H5S.get_simple_extent_dims(dataspaceId, dimensionSizes, null);
-                H5S.close(dataspaceId);
+                    H5S.get_simple_extent_dims(dataspaceId, dimensionSizes, null);
 
-                for (var i = rank; i > 0; i--)
-                {
-                    totalLength *= dimensionSizes[i - 1];
-                }
+                    for (var i = rank; i > 0; i--)
+                    {
+                        totalLength *= dimensionSizes[i - 1];
+                    }
 
-                break;
-            case H5S.class_t.NO_CLASS:
-            default:
-                return null;
+                    break;
+                case H5S.class_t.NO_CLASS:
+                default:
+                    H5D.close(datasetId);
+                    return null;
+            }
+        }
+        finally
+        {
+            H5S.close(dataspaceId);
         }
 
         var typeId = H5D.get_type(datasetId);
