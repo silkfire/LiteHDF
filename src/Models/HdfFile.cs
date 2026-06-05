@@ -113,6 +113,16 @@ public sealed class HdfFile : IDisposable
 
         var typeId = H5D.get_type(datasetId);
 
+        unsafe
+        {
+            if (H5T.get_size(typeId) != sizeof(TValue))
+            {
+                H5T.close(typeId);
+                H5D.close(datasetId);
+                return null;
+            }
+        }
+
         var buffer = new TValue[totalLength];
         unsafe
         {

@@ -1,7 +1,8 @@
-﻿namespace LiteHDF.PInvoke;
+namespace LiteHDF.PInvoke;
 
 using herr_t = int;
 using hid_t = long;
+using size_t = nint;
 
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -11,7 +12,7 @@ using System.Security;
 /// <summary>
 /// HDF5 datatypes describe the element type of HDF5 datasets and attributes.
 /// </summary>
-internal static partial class H5T
+internal sealed partial class H5T
 {
     /// <summary>
     /// Character set to use for text strings.
@@ -110,4 +111,14 @@ internal static partial class H5T
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Tclose"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t close(hid_t type_id);
+
+    /// <summary>
+    /// Returns the size of a datatype in bytes.
+    /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5T.html#Datatype-GetSize" /> for further reference.</para>
+    /// </summary>
+    /// <param name="type_id">Identifier of datatype to query.</param>
+    /// <returns>Returns the size of the datatype in bytes if successful; otherwise returns 0.</returns>
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Tget_size"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial size_t get_size(hid_t type_id);
 }
