@@ -100,6 +100,11 @@ internal static partial class H5T
         /// Reserved for later use.
         /// </summary>
         RESERVED_14 = 14,
+
+        /// <summary>
+        /// Reserved for later use.
+        /// </summary>
+        RESERVED_15 = 15,
     }
 
     /// <summary>

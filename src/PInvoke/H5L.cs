@@ -65,6 +65,7 @@ internal static partial class H5L
         /// <summary>
         /// Indicates if creation order is valid.
         /// </summary>
+        [MarshalAs(UnmanagedType.U1)]
         public bool corder_valid;
 
         /// <summary>
@@ -85,67 +86,17 @@ internal static partial class H5L
         [StructLayout(LayoutKind.Explicit)]
         public struct u_t
         {
-            ///// <summary>
-            ///// Token of location that hard link points to.
-            ///// </summary>
-            //[FieldOffset(0)]
-            //public H5O.token_t token;
-
+            /// <summary>
+            /// Token of location that hard link points to.
+            /// </summary>
             [FieldOffset(0)]
-            public byte token_data1;
-
-            [FieldOffset(1)]
-            public byte token_data2;
-
-            [FieldOffset(2)]
-            public byte token_data3;
-
-            [FieldOffset(3)]
-            public byte token_data4;
-
-            [FieldOffset(4)]
-            public byte token_data5;
-
-            [FieldOffset(5)]
-            public byte token_data6;
-
-            [FieldOffset(6)]
-            public byte token_data7;
-
-            [FieldOffset(7)]
-            public byte token_data8;
-
-            [FieldOffset(8)]
-            public byte token_data9;
-
-            [FieldOffset(9)]
-            public byte token_data10;
-
-            [FieldOffset(10)]
-            public byte token_data11;
-
-            [FieldOffset(11)]
-            public byte token_data12;
-
-            [FieldOffset(12)]
-            public byte token_data13;
-
-            [FieldOffset(13)]
-            public byte token_data14;
-
-            [FieldOffset(14)]
-            public byte token_data15;
-
-            [FieldOffset(15)]
-            public byte token_data16;
+            public H5O.token_t token;
 
             /// <summary>
             /// Size of a soft link or user-defined link value.
             /// </summary>
             [FieldOffset(0)]
             public size_t val_size;
-
-            // TODO: Get token_t
         }
     }
 
