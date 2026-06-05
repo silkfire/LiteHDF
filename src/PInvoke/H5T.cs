@@ -12,7 +12,7 @@ using System.Security;
 /// <summary>
 /// HDF5 datatypes describe the element type of HDF5 datasets and attributes.
 /// </summary>
-internal sealed partial class H5T
+internal static partial class H5T
 {
     /// <summary>
     /// Character set to use for text strings.

@@ -5,7 +5,7 @@ using hid_t = long;
 /// <summary>
 /// HDF5 property lists are the main vehicle to configure the behavior of HDF5 API functions.
 /// </summary>
-internal sealed class H5P
+internal static class H5P
 {
     /// <summary>
     /// Default value for all property list classes

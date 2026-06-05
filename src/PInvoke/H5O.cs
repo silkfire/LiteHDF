@@ -13,7 +13,7 @@ using System.Security;
 /// <summary>
 /// Manage HDF5 objects (groups, datasets, datatype objects).
 /// </summary>
-internal sealed partial class H5O
+internal static partial class H5O
 {
     /// <summary>
     /// Fill in the fileno, token, type, and rc fields.

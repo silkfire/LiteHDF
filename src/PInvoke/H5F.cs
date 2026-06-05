@@ -11,7 +11,7 @@ using System.Security;
 /// <summary>
 /// Manage HDF5 files.
 /// </summary>
-internal sealed partial class H5F
+internal static partial class H5F
 {
     // Flags for H5F.open() and H5F.create() calls
 

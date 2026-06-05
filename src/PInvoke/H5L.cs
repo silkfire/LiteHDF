@@ -14,7 +14,7 @@ using System.Security;
 /// <summary>
 /// Manage HDF5 links and link types.
 /// </summary>
-internal sealed partial class H5L
+internal static partial class H5L
 {
     /// <summary>
     /// Link class types.

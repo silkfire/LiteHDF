@@ -11,7 +11,7 @@ using hid_t = long;
 /// <summary>
 /// Manage the lifecycle of HDF5 library instances.
 /// </summary>
-internal sealed partial class H5S
+internal static partial class H5S
 {
     // Define atomic datatypes
     public const int ALL = 0;

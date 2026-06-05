@@ -9,7 +9,7 @@ using System.Security;
 /// <summary>
 /// Manage the life cycle of HDF5 library instances.
 /// </summary>
-internal sealed partial class H5
+internal static partial class H5
 {
     /// <summary>
     /// Common iteration orders.

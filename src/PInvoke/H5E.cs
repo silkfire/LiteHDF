@@ -11,7 +11,7 @@ using System.Security;
 /// <summary>
 /// HDF5 library error reporting.
 /// </summary>
-internal sealed partial class H5E
+internal static partial class H5E
 {
     /// <summary>
     /// Value for the default error stack.

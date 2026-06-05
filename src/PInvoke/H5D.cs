@@ -12,7 +12,7 @@ using hid_t = long;
 /// <summary>
 /// Manage HDF5 datasets, including the transfer of data between memory and disk and the description of dataset properties.
 /// </summary>
-internal sealed partial class H5D
+internal static partial class H5D
 {
     /// <summary>
     /// Closes the specified dataset.
