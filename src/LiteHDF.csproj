@@ -14,9 +14,9 @@
     <DocumentationFile>./LiteHDF.win-x64.xml</DocumentationFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>5.1.0</Version>
-    <AssemblyVersion>5.1.0.0</AssemblyVersion>
-    <PackageReleaseNotes>5.1.0 Update to HDF5 version 2.0.0</PackageReleaseNotes>
+    <Version>5.2.0</Version>
+    <AssemblyVersion>5.2.0.0</AssemblyVersion>
+    <PackageReleaseNotes>5.2.0 Update to HDF5 version 2.1.1</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
