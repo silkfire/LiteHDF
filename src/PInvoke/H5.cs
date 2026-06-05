@@ -1,7 +1,6 @@
 ﻿namespace LiteHDF.PInvoke;
 
 using herr_t = int;
-using hsize_t = ulong;
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -69,20 +68,6 @@ internal sealed partial class H5
         /// Number of indices defined.
         /// </summary>
         N
-    }
-
-    /// <summary>
-    /// Storage info struct used by <see cref="H5O.info1_t"/>.
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct ih_info_t
-    {
-        public hsize_t heap_size;
-
-        /// <summary>
-        /// btree and/or list
-        /// </summary>
-        public hsize_t index_size;
     }
 
     /// <summary>

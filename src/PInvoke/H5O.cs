@@ -1,11 +1,9 @@
-﻿namespace LiteHDF.PInvoke;
+namespace LiteHDF.PInvoke;
 
-using haddr_t = ulong;
 using herr_t = int;
 using hsize_t = ulong;
 using time_t = ulong;
 using hid_t = long;
-using uint64_t = ulong;
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -18,7 +16,7 @@ using System.Security;
 internal sealed partial class H5O
 {
     /// <summary>
-    /// Fill in the fileno, addr, type, and rc fields.
+    /// Fill in the fileno, token, type, and rc fields.
     /// </summary>
     public const uint H5O_INFO_BASIC = 0x0001U;
 
@@ -53,26 +51,38 @@ internal sealed partial class H5O
         NAMED_DATATYPE,
 
         /// <summary>
+        /// Object is a map.
+        /// </summary>
+        MAP,
+
+        /// <summary>
         /// Number of different object types (must be last!).
         /// </summary>
         NTYPES
     }
 
     /// <summary>
+    /// Type for object tokens.
+    /// </summary>
+    /// <remarks>An object token is an opaque, fixed-size (16-byte) identifier of an object within an HDF5 container.</remarks>
+    [StructLayout(LayoutKind.Sequential, Size = 16)]
+    public struct token_t { }
+
+    /// <summary>
     /// Data model information struct for objects (for <see cref="get_info_by_name"/>).
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct info1_t
+    public struct info2_t
     {
         /// <summary>
-        /// File number that object is located in.
+        /// File number that object is located in. Constant across multiple opens of the same file.
         /// </summary>
         public uint fileno;
 
         /// <summary>
-        /// Object address in file.
+        /// Token representing the object.
         /// </summary>
-        public haddr_t addr;
+        public token_t token;
 
         /// <summary>
         /// Basic object type (group, dataset, etc.).
@@ -105,94 +115,9 @@ internal sealed partial class H5O
         public time_t btime;
 
         /// <summary>
-        /// # of attributes attached to object.
+        /// Number of attributes attached to object.
         /// </summary>
         public hsize_t num_attrs;
-
-        /// <summary>
-        /// Object header information
-        /// </summary>
-        public hdr_info_t hdr;
-
-        public meta_size_t meta_size;
-    }
-
-    /// <summary>
-    /// Information struct for object header metadata
-    /// (for H5Oget_info/H5Oget_info_by_name/H5Oget_info_by_idx)
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct hdr_info_t
-    {
-        /// <summary>
-        /// Version number of header format in file
-        /// </summary>
-        public uint version;
-
-        /// <summary>
-        /// Number of object header messages
-        /// </summary>
-        public uint nmesgs;
-
-        /// <summary>
-        /// Number of object header chunks
-        /// </summary>
-        public uint nchunks;
-
-        /// <summary>
-        /// Object header status flags
-        /// </summary>
-        public uint flags;
-
-        public space_t space;
-
-        public mesg_t mesg;
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct space_t
-        {
-            /// <summary>
-            /// Total space for storing object header in file.
-            /// </summary>
-            public hsize_t total;
-
-            /// <summary>
-            /// Space within header for object header metadata information.
-            /// </summary>
-            public hsize_t meta;
-
-            /// <summary>
-            /// Space within header for actual message information.
-            /// </summary>
-            public hsize_t mesg;
-
-            /// <summary>
-            /// Free space within object header.
-            /// </summary>
-            public hsize_t free;
-        };
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct mesg_t
-        {
-            /// <summary>
-            /// Flags to indicate presence of message type in header.
-            /// </summary>
-            public uint64_t present;
-
-            /// <summary>
-            /// Flags to indicate message type is shared in header.
-            /// </summary>
-            public uint64_t shared;
-        };
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct meta_size_t
-    {
-        public H5.ih_info_t obj;
-
-        public H5.ih_info_t attr;
     }
 
     /// <summary>
@@ -205,7 +130,7 @@ internal sealed partial class H5O
     /// <param name="fields">Flags specifying the fields to include in <paramref name="oinfo"/>.</param>
     /// <param name="lapl_id">Link access property list.</param>
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
-    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Oget_info_by_name2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Oget_info_by_name3"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    public static partial herr_t get_info_by_name(hid_t loc_id, [MarshalUsing(typeof(Utf8StringMarshaller))] string name, out info1_t oinfo, uint fields, hid_t lapl_id);
+    public static partial herr_t get_info_by_name(hid_t loc_id, [MarshalUsing(typeof(Utf8StringMarshaller))] string name, out info2_t oinfo, uint fields, hid_t lapl_id);
 }
