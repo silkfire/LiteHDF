@@ -4,6 +4,7 @@ using PInvoke;
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -12,11 +13,11 @@ using System.Runtime.InteropServices;
 /// </summary>
 public sealed class HdfFile : IDisposable
 {
-    private static readonly Dictionary<H5O.type_t, ObjectType> s_objectTypes = new()
-                                                                               {
-                                                                                   [H5O.type_t.GROUP] = ObjectType.Group,
-                                                                                   [H5O.type_t.DATASET] = ObjectType.Dataset
-                                                                               };
+    private static readonly ReadOnlyDictionary<H5O.type_t, ObjectType> s_objectTypes = new Dictionary<H5O.type_t, ObjectType>
+                                                                                       {
+                                                                                           [H5O.type_t.GROUP] = ObjectType.Group,
+                                                                                           [H5O.type_t.DATASET] = ObjectType.Dataset
+                                                                                       }.AsReadOnly();
 
     private bool _disposed;
 
