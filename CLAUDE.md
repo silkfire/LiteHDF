@@ -32,7 +32,7 @@ and check against them — not against memory, not against a different version.
 Relevant headers: `H5public.h`, `H5Lpublic.h`, `H5Opublic.h`, `H5Tpublic.h`,
 `H5Spublic.h`, `H5Dpublic.h`, `H5Fpublic.h`, `H5Epublic.h`.
 
-Fetch headers via the GitHub MCP server. They are large (90–110 KB) and will be
+Fetch headers via the GitHub MCP server. They are large (90-110 KB) and will be
 saved to a tool-results file rather than returned inline — that's expected. Read
 them by grepping the saved file for the type name, or decode with a short Python
 snippet (the file is JSON with `\n`-escaped content on one line).
@@ -90,20 +90,65 @@ enum from the header.
 
 ## Verifying native-interop changes (don't trust "it compiles")
 
-A successful build proves nothing about struct layout. The existing test suite
-only covers `GetLibraryVersion`, so it will **not** catch a marshalling
-regression. To actually validate a change to `info2_t`, an entry point, or any
-struct:
+A successful build proves nothing about struct layout. The test suite under
+`tests/LiteHDF.Tests/` does exercise the real marshalling paths, so run it first:
+`dotnet test tests/LiteHDF.Tests/LiteHDF.Tests.csproj -c Debug`. It drives
+committed h5py-authored files (`TestData/*.h5`) through the public surface —
+`GetGroupObjectData` (reads `oinfo.type`, which is what the `info2_t`/entry-point
+pairing regression crashed on), `GetData<T>` across every numeric width and
+several dataspace shapes, `GetString`, and `Open` — so a struct-layout regression
+will generally make a test fail rather than pass silently.
 
-1. Author a small HDF5 file with `python` + `h5py` (`pip install h5py`; it bundles
-   its own HDF5 and produces format-compatible files). Include a group, a couple
-   of datasets, and nested groups.
-2. Drive it through LiteHDF with a throwaway console project that references
-   `src/LiteHDF.csproj`, exercising `GetGroupObjectData` (reads `oinfo.type`) and
-   `GetData<T>` (reads `oinfo.ctime`).
-3. To prove a fix matters, temporarily revert it and re-run — confirm it breaks.
-4. Clean up the scratch project/file afterward.
+That said, the suite can't anticipate a new field or struct you add. When you
+touch `info2_t`, an entry point, or any struct that isn't already covered:
+
+1. Extend the suite (or, for a quick spike, drive a throwaway console project that
+   references `src/LiteHDF.csproj`) with a file that actually contains the thing
+   you changed. Author HDF5 files with `python` + `h5py` (`pip install h5py`; it
+   bundles its own HDF5 and produces format-compatible files); see `TestData/` for
+   the existing fixtures.
+2. To prove a fix matters, temporarily revert it and re-run — confirm it breaks.
+3. Clean up any scratch project/file afterward (don't leave it next to the tests).
 
 Note: `ctime` is often `0`/`null` for h5py-authored files (HDF5 doesn't always
-record object change times). That's correct behavior, not a marshalling bug —
-distinguish "zero from the right offset" from "garbage from the wrong offset".
+record object change times) — `GetData_change_time_is_null_for_h5py_file` asserts
+exactly this. That's correct behavior, not a marshalling bug — distinguish "zero
+from the right offset" from "garbage from the wrong offset".
+
+## Test fixtures
+
+The five `.h5` files in `tests/LiteHDF.Tests/TestData/` are committed directly.
+There is no generator script in the repo — they were produced once with h5py and
+committed. If you need to recreate or extend them:
+
+```python
+import numpy as np, h5py
+# see the commit that introduced the TestData/ folder for the full script
+```
+
+Each file targets a specific concern:
+- `numeric.h5` — one dataset per numeric type (`/i8`…`/f64`), boundary values
+- `shapes.h5` — dataspace classes: `/scalar`, `/vector`, `/matrix`, `/cube`, `/empty` (NULL)
+- `strings.h5` — variable-length strings: `/vlen_ascii`, `/vlen_utf8`
+- `structure.h5` — group nesting: root has two datasets + `groupA`; `groupA` has `sub` + `ds_a`
+- `unsupported.h5` — a committed named datatype (`/named_type`) + a normal dataset,
+  used to test `ObjectType.Unsupported`
+
+When adding a new fixture, also add a `Content` item in `LiteHDF.Tests.csproj` —
+the `Content Include="TestData\*.h5"` glob already covers any new `.h5` in that folder.
+
+## Test parallelism
+
+`AssemblyInfo.cs` (or the equivalent `<AssemblyAttribute>` in the csproj) sets
+`[assembly: CollectionBehavior(DisableTestParallelization = true)]`. **Do not
+remove this.** The HDF5 native library has global process-level state; running
+xUnit's default parallel test-class execution causes an access-violation crash
+(`0xC0000005`) that kills the test host. All tests must run sequentially within a
+single process.
+
+## GetString: variable-length only
+
+`GetString` only supports variable-length (`H5T_VARIABLE`) string datasets. The
+doc comment on `HdfFile.GetString` says fixed-length strings "will cause undefined
+behaviour" — this means the result is unpredictable and may crash the test host.
+The test suite deliberately does not include a fixed-length string fixture or test.

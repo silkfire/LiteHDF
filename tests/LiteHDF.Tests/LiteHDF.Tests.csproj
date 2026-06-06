@@ -27,4 +27,15 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="TestData\*.h5" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="Xunit.CollectionBehavior">
+      <DisableTestParallelization>true</DisableTestParallelization>
+      <DisableTestParallelization_IsLiteral>true</DisableTestParallelization_IsLiteral>
+    </AssemblyAttribute>
+  </ItemGroup>
+  
 </Project>

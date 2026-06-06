@@ -13,5 +13,10 @@ public enum ObjectType
     /// <summary>
     /// A dataset containing raw data.
     /// </summary>
-    Dataset
+    Dataset,
+
+    /// <summary>
+    /// An object of a type LiteHDF does not model, such as a named datatype or map.
+    /// </summary>
+    Unsupported
 }

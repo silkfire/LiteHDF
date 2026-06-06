@@ -61,7 +61,7 @@ public sealed class HdfFile : IDisposable
                                                                                                              groupData.Add(new HdfObject
                                                                                                                            {
                                                                                                                                Name = name,
-                                                                                                                               Type = s_objectTypes[oinfo.type],
+                                                                                                                               Type = s_objectTypes.TryGetValue(oinfo.type, out var objectType) ? objectType : ObjectType.Unsupported,
                                                                                                                                File = this
                                                                                                                            });
                                                                                                              return 0;
