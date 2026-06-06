@@ -13,6 +13,7 @@
     <Description>Lightweight library for reading HDF5 files.</Description>
     <DocumentationFile>./LiteHDF.win-x64.xml</DocumentationFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <Version>5.2.0</Version>
     <AssemblyVersion>5.2.0.0</AssemblyVersion>
