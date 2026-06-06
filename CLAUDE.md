@@ -14,7 +14,7 @@ binding layer; treat it as the trust boundary.
 ## Layout & build
 
 - Library project: `src/LiteHDF.csproj` (assembly name `LiteHDF.win-x64`),
-  solution `src/LiteHDF.sln`. Tests: `tests/LiteHDF.Tests/` (xUnit v3).
+  solution `LiteHDF.sln` (repo root). Tests: `tests/LiteHDF.Tests/` (xUnit v3).
 - Target framework is `net10.0-windows`. The `-windows` and x64-only nature are
   intentional (see LLP64 note below) — don't "helpfully" make it cross-platform.
 - Build: `dotnet build src/LiteHDF.csproj -c Debug`. Test:

@@ -21,13 +21,13 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        run: dotnet restore src/LiteHDF.sln
+        run: dotnet restore
 
       - name: Build
-        run: dotnet build src/LiteHDF.sln -c Release --no-restore
+        run: dotnet build -c Release --no-restore
 
       - name: Test
-        run: dotnet test src/LiteHDF.sln -c Release --no-build
+        run: dotnet test -c Release --no-build
 
       - name: Pack
         run: dotnet pack src/LiteHDF.csproj -c Release --no-build -o artifacts
