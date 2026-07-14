@@ -80,6 +80,18 @@ These are the traps that have actually bitten this project:
    uses `SuppressUnmanagedCodeSecurity, SecuritySafeCritical`. Match the existing
    pattern when adding imports.
 
+7. **HDF5 link/object names are UTF-8; marshal them with `Utf8StringMarshaller`.**
+   All name parameters (`H5Fopen`, `H5Dopen2`, `H5Oget_info_by_name3`,
+   `H5Literate_by_name2` group name, **and** the `iterate2_t` callback's link name)
+   use `[MarshalUsing(typeof(Utf8StringMarshaller))]`. Do **not** use
+   `AnsiStringMarshaller` — on a non-UTF-8 ANSI code page it mis-encodes non-ASCII
+   names. (Beware: a dev box with the "Use Unicode UTF-8" beta option has ACP 65001,
+   so ANSI and UTF-8 behave identically there and a mis-marshalling won't reproduce.)
+
+8. **Callback structs mirror the C pointer ABI.** The `iterate2_t` delegate takes
+   `in info2_t info` because the C `H5L_iterate2_t` receives `const H5L_info2_t *`.
+   Don't declare it by value — it happens to work on win-x64 by ABI coincidence only.
+
 ## Enum fidelity
 
 Enums that are only consumed by managed code (e.g. the `NTYPES`/`N` sentinels,
@@ -117,7 +129,7 @@ from the right offset" from "garbage from the wrong offset".
 
 ## Test fixtures
 
-The five `.h5` files in `tests/LiteHDF.Tests/TestData/` are committed directly.
+The `.h5` files in `tests/LiteHDF.Tests/TestData/` are committed directly.
 There is no generator script in the repo — they were produced once with h5py and
 committed. If you need to recreate or extend them:
 
@@ -133,6 +145,16 @@ Each file targets a specific concern:
 - `structure.h5` — group nesting: root has two datasets + `groupA`; `groupA` has `sub` + `ds_a`
 - `unsupported.h5` — a committed named datatype (`/named_type`) + a normal dataset,
   used to test `ObjectType.Unsupported`
+- `endian.h5` — big-endian `/be_i32`, `/be_f64` (+ little-endian `/le_i32`) to prove
+  `GetData<T>` converts byte order
+- `strings_edge.h5` — `/vlen_array` (N>1 vlen), `/fixed_ascii` (fixed-length),
+  `/vlen_single`; exercises the `GetString` guards
+- `unicode_names.h5` — datasets with non-ASCII names (`mätvärden`, `温度`,
+  `gruppe/café`) to prove UTF-8 name marshalling
+
+Note: a test source file containing non-ASCII string literals (e.g.
+`UnicodeNameTests.cs`) must be saved as **UTF-8 with BOM** so Roslyn reads the
+literals correctly regardless of the build host's locale.
 
 When adding a new fixture, also add a `Content` item in `LiteHDF.Tests.csproj` —
 the `Content Include="TestData\*.h5"` glob already covers any new `.h5` in that folder.
@@ -146,9 +168,39 @@ xUnit's default parallel test-class execution causes an access-violation crash
 (`0xC0000005`) that kills the test host. All tests must run sequentially within a
 single process.
 
-## GetString: variable-length only
+## Reads convert to native type and fail loudly
 
-`GetString` only supports variable-length (`H5T_VARIABLE`) string datasets. The
-doc comment on `HdfFile.GetString` says fixed-length strings "will cause undefined
-behaviour" — this means the result is unpredictable and may crash the test host.
-The test suite deliberately does not include a fixed-length string fixture or test.
+Two invariants in `HdfFile` that are easy to accidentally undo:
+
+- **`GetData<T>` reads into the *native* in-memory type**, obtained via
+  `H5Tget_native_type(fileType, DEFAULT)` — not the file type. Passing the file type
+  as `H5Dread`'s `mem_type_id` suppresses conversion, so a big-endian (or otherwise
+  non-native) dataset reads as byte-swapped garbage. The size check compares
+  `H5Tget_size(nativeType)` to `sizeof(T)`. `endian.h5` covers this; don't revert to
+  passing the file type.
+
+- **Failed native reads throw `IOException`, they don't return zeroed data.**
+  `H5Dread`, `H5Literate_by_name2`, and `H5Oget_info_by_name3` return values are
+  checked; a negative `herr_t` throws. A silently-zeroed buffer that looks like valid
+  data is the worst failure mode for a data library, so keep these checked.
+  `GetGroupObjectData` on a nonexistent group therefore **throws** (a negative iterate
+  return) rather than returning an empty array — don't "helpfully" swallow it back to `[]`.
+
+## File handle is a SafeHandle
+
+The native file handle is wrapped in `Hdf5FileHandle : SafeHandle`
+(`src/PInvoke/Hdf5FileHandle.cs`); `ReleaseHandle` calls `H5Fclose`. `HdfFile` has
+no hand-rolled finalizer — the SafeHandle finalizes the handle. `FileIdentifier`
+projects `_handle.FileId`, and `ToString` reports `NULL` once the handle is closed
+(`IsClosed`/`IsInvalid`). `hid_t` is a 64-bit `long` stored in the handle's `nint`,
+which is safe because this library is x64-only.
+
+## GetString: variable-length, single-element only
+
+`GetString` only supports a **single** variable-length (`H5T_VARIABLE`) string
+element. It guards the dataspace element count (`H5Sget_simple_extent_npoints == 1`)
+and the datatype (`H5Tis_variable_str`), returning `null` otherwise — a multi-element
+vlen dataset would overrun the single-pointer read buffer (memory corruption), and a
+fixed-length string isn't a pointer at all. `strings_edge.h5` covers both rejected
+cases plus the single-element happy path. Don't remove the guard; the doc comment's
+"undefined behaviour" wording predates it, but the guard is what keeps it safe.

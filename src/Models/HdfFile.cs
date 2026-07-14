@@ -224,9 +224,10 @@ public sealed class HdfFile : IDisposable
     /// Reads a variable-length UTF-8 string dataset.
     /// </summary>
     /// <param name="datasetPath">Absolute path to the dataset within the file.</param>
-    /// <returns>The string value, or <see langword="null"/> if the dataset does not exist.</returns>
-    /// <remarks>The dataset must use a variable-length (<c>H5T_VARIABLE</c>) string datatype.
-    /// Fixed-length string datasets are not supported and will cause undefined behaviour.</remarks>
+    /// <returns>The string value, or <see langword="null"/> if the dataset does not exist, is not a
+    /// single-element dataspace, or does not use a variable-length string datatype.</returns>
+    /// <remarks>Only a single variable-length (<c>H5T_VARIABLE</c>) string element is supported.
+    /// Multi-element and fixed-length string datasets return <see langword="null"/>.</remarks>
     public string? GetString(string datasetPath)
     {
         var datasetId = H5D.open(FileIdentifier, datasetPath, H5P.DEFAULT);
