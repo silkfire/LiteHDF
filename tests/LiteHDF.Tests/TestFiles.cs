@@ -10,5 +10,6 @@ internal static class TestFiles
     public static string Strings     => Path("strings.h5");
     public static string StringsEdge => Path("strings_edge.h5");
     public static string Structure   => Path("structure.h5");
-    public static string Unsupported => Path("unsupported.h5");
+    public static string Unsupported  => Path("unsupported.h5");
+    public static string UnicodeNames => Path("unicode_names.h5");
 }

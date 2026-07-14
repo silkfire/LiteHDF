@@ -109,7 +109,7 @@ internal static partial class H5L
     /// <param name="op_data">User-defined pointer to data required by the application in processing the link.</param>
     /// <returns>Zero causes the visit iterator to continue, returning zero when all group members have been processed. A positive value causes the visit iterator to immediately return that positive value, indicating short-circuit success. A negative value causes the visit iterator to immediately return that value, indicating failure.</returns>
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate herr_t iterate2_t(hid_t group, [MarshalUsing(typeof(AnsiStringMarshaller))] string name, info2_t info, nint op_data);
+    public delegate herr_t iterate2_t(hid_t group, [MarshalUsing(typeof(Utf8StringMarshaller))] string name, info2_t info, nint op_data);
 
     /// <summary>
     /// Iterates through links in a group.
@@ -126,5 +126,5 @@ internal static partial class H5L
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Literate_by_name2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    public static partial herr_t iterate_by_name(hid_t loc_id, [MarshalUsing(typeof(AnsiStringMarshaller))] string group_name, H5.index_t idx_type, H5.iter_order_t order, ref hsize_t idx, iterate2_t op, nint op_data, hid_t lapl_id);
+    public static partial herr_t iterate_by_name(hid_t loc_id, [MarshalUsing(typeof(Utf8StringMarshaller))] string group_name, H5.index_t idx_type, H5.iter_order_t order, ref hsize_t idx, iterate2_t op, nint op_data, hid_t lapl_id);
 }

@@ -54,7 +54,7 @@ internal static partial class H5D
     /// <returns>Returns a dataset identifier if successful; otherwise returns a negative value.</returns>
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Dopen2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    public static partial hid_t open(hid_t file_id, [MarshalUsing(typeof(AnsiStringMarshaller))] string name, hid_t dapl_id);
+    public static partial hid_t open(hid_t file_id, [MarshalUsing(typeof(Utf8StringMarshaller))] string name, hid_t dapl_id);
 
     /// <summary>
     /// Reads raw data from a dataset into a buffer.
