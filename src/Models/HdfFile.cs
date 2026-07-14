@@ -173,7 +173,9 @@ public sealed class HdfFile : IDisposable
                     }
                 }
 
-                buffer = new TValue[totalLength];
+                // Skip the redundant zero-fill: H5Dread below overwrites every byte, so
+                // zeroing first is pure waste (measurable for large datasets).
+                buffer = GC.AllocateUninitializedArray<TValue>((int)totalLength);
 
                 // A NULL dataspace reads zero elements; a fixed on an empty array yields a
                 // null pointer, so skip the read entirely rather than pass H5Dread a null buffer.
