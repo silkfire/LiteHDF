@@ -13,7 +13,7 @@ public class GetDataTests
         var data = hdf.GetData<sbyte>("/i8");
 
         Assert.NotNull(data);
-        Assert.Equal([unchecked((sbyte)-128), -1, 0, 127], data.Value);
+        Assert.Equal([unchecked(-128), -1, 0, 127], data.Value);
     }
 
     [Fact]

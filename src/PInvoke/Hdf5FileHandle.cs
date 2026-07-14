@@ -1,6 +1,5 @@
 namespace LiteHDF.PInvoke;
 
-using System;
 using System.Runtime.InteropServices;
 
 using hid_t = long;
@@ -12,8 +11,7 @@ using hid_t = long;
 /// <remarks>HDF5 identifiers are negative on failure, so any negative value is treated as invalid.</remarks>
 internal sealed class Hdf5FileHandle : SafeHandle
 {
-    public Hdf5FileHandle(hid_t fileId)
-        : base(unchecked((nint)(-1)), ownsHandle: true)
+    public Hdf5FileHandle(hid_t fileId) : base(unchecked(-1), ownsHandle: true)
     {
         SetHandle((nint)fileId);
     }
@@ -24,8 +22,8 @@ internal sealed class Hdf5FileHandle : SafeHandle
     /// <summary>
     /// The underlying HDF5 file identifier.
     /// </summary>
-    public hid_t FileId => (hid_t)handle;
+    public hid_t FileId => handle;
 
     /// <inheritdoc/>
-    protected override bool ReleaseHandle() => H5F.close((hid_t)handle) >= 0;
+    protected override bool ReleaseHandle() => H5F.close(handle) >= 0;
 }

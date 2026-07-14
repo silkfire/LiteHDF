@@ -62,7 +62,7 @@ public sealed class HdfFile : IDisposable
         List<HdfObject> groupData = [];
 
         var idx = 0UL;
-        if (H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (long _, string name, in H5L.info2_t _, nint _) =>
+        if (H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, name, in _, _) =>
                                                                                                          {
                                                                                                              if (H5O.get_info_by_name(FileIdentifier, $"{groupPath}/{name}", out var oinfo, H5O.H5O_INFO_BASIC, H5P.DEFAULT) < 0)
                                                                                                              {
@@ -72,7 +72,7 @@ public sealed class HdfFile : IDisposable
                                                                                                              groupData.Add(new HdfObject
                                                                                                                            {
                                                                                                                                Name = name,
-                                                                                                                               Type = s_objectTypes.TryGetValue(oinfo.type, out var objectType) ? objectType : ObjectType.Unsupported,
+                                                                                                                               Type = s_objectTypes.GetValueOrDefault(oinfo.type, ObjectType.Unsupported),
                                                                                                                                File = this
                                                                                                                            });
                                                                                                              return 0;
