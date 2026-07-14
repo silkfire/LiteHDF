@@ -105,11 +105,11 @@ internal static partial class H5L
     /// </summary>
     /// <param name="group">Group that serves as root of the iteration.</param>
     /// <param name="name">Name of link, relative to <paramref name="group"/>, being examined at current step of the iteration.</param>
-    /// <param name="info">An <see cref="info2_t"/> struct containing information regarding that link.</param>
+    /// <param name="info">An <see cref="info2_t"/> struct containing information regarding that link. Native HDF5 passes this by pointer (<c>const H5L_info2_t *</c>), so it is declared <see langword="in"/>.</param>
     /// <param name="op_data">User-defined pointer to data required by the application in processing the link.</param>
     /// <returns>Zero causes the visit iterator to continue, returning zero when all group members have been processed. A positive value causes the visit iterator to immediately return that positive value, indicating short-circuit success. A negative value causes the visit iterator to immediately return that value, indicating failure.</returns>
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate herr_t iterate2_t(hid_t group, [MarshalUsing(typeof(Utf8StringMarshaller))] string name, info2_t info, nint op_data);
+    public delegate herr_t iterate2_t(hid_t group, [MarshalUsing(typeof(Utf8StringMarshaller))] string name, in info2_t info, nint op_data);
 
     /// <summary>
     /// Iterates through links in a group.
