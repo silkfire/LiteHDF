@@ -21,6 +21,13 @@ public sealed class HdfFile : IDisposable
 
     private bool _disposed;
 
+    static HdfFile()
+    {
+        // Turn off HDF5's automatic error printing. This mutates process-global state,
+        // so do it once per process rather than on every file open.
+        H5E.set_auto(H5E.DEFAULT, null, nint.Zero);
+    }
+
     /// <summary>
     /// File name (without directory path) of the open HDF5 file.
     /// </summary>
@@ -33,8 +40,6 @@ public sealed class HdfFile : IDisposable
 
     internal HdfFile(string filepath)
     {
-        H5E.set_auto(H5E.DEFAULT, null, nint.Zero);           // Turn off redundant error logging
-
         Filename = Path.GetFileName(filepath);
 
         FileIdentifier = H5F.open(filepath, H5F.ACC_RDONLY, H5P.DEFAULT);
