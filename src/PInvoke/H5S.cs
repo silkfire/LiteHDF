@@ -63,8 +63,14 @@ internal static partial class H5S
     /// <param name="maxdims">Pointer to array to store the maximum size of each dimension.</param>
     /// <returns>Returns the number of dimensions in the dataspace if successful; otherwise returns a negative value.</returns>
     /// <remarks>Either or both of <paramref name="dims"/> and <paramref name="maxdims"/> may be <c>NULL</c>.</remarks>
+    // SuppressGCTransition (all three simple-extent getters below): pure in-memory getters
+    // on an already-loaded dataspace. No I/O, no allocation, no callback, and the bundled
+    // hdf5.dll is a non-threadsafe build (no library mutex), so skipping the GC transition
+    // is safe. get_simple_extent_dims only copies dims into a caller array via [Out], which
+    // just pins a blittable array — compatible with the attribute. If the DLL is ever swapped
+    // for a threadsafe build, remove these attributes.
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Sget_simple_extent_dims"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)]), SuppressGCTransition]
     public static partial int get_simple_extent_dims(hid_t space_id, [Out] hsize_t[] dims, [Out] hsize_t[]? maxdims);
 
     /// <summary>
@@ -74,7 +80,7 @@ internal static partial class H5S
     /// <param name="space_id">Identifier of the dataspace.</param>
     /// <returns>Returns the number of dimensions in the dataspace if successful; otherwise returns a negative value.</returns>
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Sget_simple_extent_ndims"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)]), SuppressGCTransition]
     public static partial int get_simple_extent_ndims(hid_t space_id);
 
     /// <summary>
@@ -94,6 +100,6 @@ internal static partial class H5S
     /// <param name="space_id">Identifier of the dataspace.</param>
     /// <returns>Returns a dataspace class name if successful; otherwise <see cref="class_t.NO_CLASS"/> (-1).</returns>
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Sget_simple_extent_type"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)]), SuppressGCTransition]
     public static partial class_t get_simple_extent_type(hid_t space_id);
 }

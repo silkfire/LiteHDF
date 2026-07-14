@@ -145,8 +145,12 @@ internal static partial class H5T
     /// </summary>
     /// <param name="type_id">Identifier of datatype to query.</param>
     /// <returns>Returns the size of the datatype in bytes if successful; otherwise returns 0.</returns>
+    // SuppressGCTransition: pure in-memory getter (reads the size off an already-loaded
+    // datatype). No I/O, no allocation, no callback, and the bundled hdf5.dll is a
+    // non-threadsafe build (no library mutex to acquire), so skipping the GC transition
+    // is safe. If the DLL is ever swapped for a threadsafe build, remove this attribute.
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Tget_size"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
-    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)]), SuppressGCTransition]
     public static partial size_t get_size(hid_t type_id);
 
     /// <summary>
