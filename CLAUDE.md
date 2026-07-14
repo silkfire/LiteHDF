@@ -51,7 +51,9 @@ These are the traps that have actually bitten this project:
    misread `type` value missed the `s_objectTypes` dictionary. **Always confirm the
    struct/function pairing in the header**, don't trust the suffix matching.
    - Current correct pairing: `info2_t` (16-byte `token_t`, no trailing
-     `hdr`/`meta_size`) with `H5Oget_info_by_name3`.
+     `hdr`/`meta_size`) with both `H5Oget_info_by_name3` (by path) and
+     `H5Oget_info3` (by open object id — used in `GetData<T>` to read dataset
+     metadata off the already-open `datasetId` instead of re-resolving the path).
 
 2. **`unsigned long` is 4 bytes here, not 8.** Windows x64 is LLP64, so C
    `unsigned long` → `uint`, not `ulong`. `H5O_info2_t.fileno` is `unsigned long`
@@ -80,17 +82,48 @@ These are the traps that have actually bitten this project:
    uses `SuppressUnmanagedCodeSecurity, SecuritySafeCritical`. Match the existing
    pattern when adding imports.
 
-7. **HDF5 link/object names are UTF-8; marshal them with `Utf8StringMarshaller`.**
-   All name parameters (`H5Fopen`, `H5Dopen2`, `H5Oget_info_by_name3`,
-   `H5Literate_by_name2` group name, **and** the `iterate2_t` callback's link name)
-   use `[MarshalUsing(typeof(Utf8StringMarshaller))]`. Do **not** use
+7. **HDF5 link/object names are UTF-8.** For `string` parameters (`H5Fopen`,
+   `H5Dopen2`, `H5Oget_info_by_name3`, `H5Literate_by_name2` group name) use
+   `[MarshalUsing(typeof(Utf8StringMarshaller))]`. Do **not** use
    `AnsiStringMarshaller` — on a non-UTF-8 ANSI code page it mis-encodes non-ASCII
    names. (Beware: a dev box with the "Use Unicode UTF-8" beta option has ACP 65001,
    so ANSI and UTF-8 behave identically there and a mis-marshalling won't reproduce.)
+   The `H5Literate_by_name2` **callback** link name is no longer a marshalled `string`
+   (see #8) — it arrives as a raw `byte*`; recover it with `Marshal.PtrToStringUTF8`
+   (still UTF-8, still not ANSI — the rule stands, only the mechanism changed).
 
-8. **Callback structs mirror the C pointer ABI.** The `iterate2_t` delegate takes
-   `in info2_t info` because the C `H5L_iterate2_t` receives `const H5L_info2_t *`.
-   Don't declare it by value — it happens to work on win-x64 by ABI coincidence only.
+8. **The `H5Literate_by_name2` operator is an unmanaged function pointer, not a
+   delegate.** `H5L.iterate_by_name`'s `op` parameter is
+   `delegate* unmanaged[Cdecl]<hid_t, byte*, info2_t*, nint, herr_t>`, matching the C
+   `herr_t (*)(hid_t group, const char *name, const H5L_info2_t *info, void *op_data)`
+   directly (link name as `byte*`, info as `info2_t*` — mirroring the `const
+   H5L_info2_t *` pointer; never declare `info` by value). The managed operator is a
+   `static [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]` method
+   (`HdfFile.OnLink`); because it can't capture, the accumulation state is threaded
+   through `op_data` as a pinned `GCHandle` and recovered in the callback. It must not
+   let a managed exception escape into the native frame — on failure it records the
+   error in the state and returns a negative `herr_t` to abort iteration, and the
+   managed caller re-throws after `iterate_by_name` returns.
+
+## `[SuppressGCTransition]` depends on the non-threadsafe DLL
+
+Four pure in-memory getters carry `[SuppressGCTransition]` to skip the GC transition
+on the `GetData<T>` hot path: `H5T.get_size` and `H5S.get_simple_extent_{ndims,type,
+dims}`. They are safe because they do no I/O, no allocation, no ID-table mutation, and
+no callbacks — **and** because the bundled `src/native/hdf5.dll` is a non-threadsafe
+build, so there is no global library mutex to acquire (the attribute's contract
+forbids taking locks).
+
+This is a hard precondition. If the bundled DLL is ever swapped for a **threadsafe**
+build, the library's recursive mutex would be acquired under these calls and the "no
+locks" contract would be violated — **remove the attribute from all four** in that
+case. To re-check the bundled build's thread safety, scan the DLL for its embedded
+config summary (a Python byte-scan for `SUMMARY OF THE HDF5 CONFIGURATION`; look for
+the `Threadsafety:` line — currently `OFF`).
+
+Do **not** extend `[SuppressGCTransition]` to `open`/`read`/`close`/`get_info*` (I/O
+or path-walking), `get_space`/`get_type` (allocate + register a new ID), or
+`iterate_by_name` (runs a managed callback).
 
 ## Enum fidelity
 
@@ -180,11 +213,16 @@ Two invariants in `HdfFile` that are easy to accidentally undo:
   passing the file type.
 
 - **Failed native reads throw `IOException`, they don't return zeroed data.**
-  `H5Dread`, `H5Literate_by_name2`, and `H5Oget_info_by_name3` return values are
-  checked; a negative `herr_t` throws. A silently-zeroed buffer that looks like valid
-  data is the worst failure mode for a data library, so keep these checked.
+  `H5Dread`, `H5Literate_by_name2`, `H5Oget_info_by_name3`, and `H5Oget_info3` return
+  values are checked; a negative `herr_t` throws. A silently-zeroed buffer that looks
+  like valid data is the worst failure mode for a data library, so keep these checked.
   `GetGroupObjectData` on a nonexistent group therefore **throws** (a negative iterate
-  return) rather than returning an empty array — don't "helpfully" swallow it back to `[]`.
+  return) rather than returning an empty collection — don't "helpfully" swallow it back
+  to an empty result. Note the iteration operator is now an unmanaged function pointer
+  (see P/Invoke gotcha #8): a per-child metadata-read failure is recorded in the
+  callback state and the callback returns negative to abort; `GetGroupObjectData`
+  re-throws the `IOException` after `iterate_by_name` returns rather than throwing
+  across the native frame. Observable behavior is unchanged.
 
 ## File handle is a SafeHandle
 
