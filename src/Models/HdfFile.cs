@@ -56,8 +56,8 @@ public sealed class HdfFile : IDisposable
     /// Returns metadata for all objects (groups and datasets) directly within a group.
     /// </summary>
     /// <param name="groupPath">Absolute path to the group within the file.</param>
-    /// <returns>An array of <see cref="HdfObject"/> describing each child object.</returns>
-    public HdfObject[] GetGroupObjectData(string groupPath)
+    /// <returns>A read-only collection of <see cref="HdfObject"/> describing each child object.</returns>
+    public ReadOnlyCollection<HdfObject> GetGroupObjectData(string groupPath)
     {
         List<HdfObject> groupData = [];
 
@@ -87,7 +87,8 @@ public sealed class HdfFile : IDisposable
             throw new IOException($"Failed to iterate group: {groupPath}");
         }
 
-        return groupData.ToArray();
+        // Wrap the accumulated list in place (no element copy) as an immutable view.
+        return groupData.AsReadOnly();
     }
 
     /// <summary>

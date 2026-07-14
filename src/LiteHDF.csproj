@@ -15,9 +15,9 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>5.3.0</Version>
-    <AssemblyVersion>5.3.0.0</AssemblyVersion>
-    <PackageReleaseNotes>5.3.0 Bug fixes, performance improvements</PackageReleaseNotes>
+    <Version>6.0.0</Version>
+    <AssemblyVersion>6.0.0.0</AssemblyVersion>
+    <PackageReleaseNotes>6.0.0 Performance improvements. Breaking: GetGroupObjectData now returns ReadOnlyCollection&lt;HdfObject&gt; instead of HdfObject[]</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

@@ -27,10 +27,10 @@ catch (IOException)
 
 ### Listing the group structure
 
-Getting the structure of a group (or the root) is done by calling the `GetGroupObjectData` method. It returns an array of `HdfObject` structs containing the name, type and a reference to the file of each object in the group.
+Getting the structure of a group (or the root) is done by calling the `GetGroupObjectData` method. It returns a read-only collection of `HdfObject` structs containing the name, type and a reference to the file of each object in the group.
 
 ```csharp
-HdfObject[] objects = hdf.GetGroupObjectData("/entries");
+ReadOnlyCollection<HdfObject> objects = hdf.GetGroupObjectData("/entries");
 
 foreach (var obj in objects)
 {

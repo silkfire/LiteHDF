@@ -12,7 +12,7 @@ public class GetGroupObjectDataTests
         using var hdf = Hdf.Open(TestFiles.Structure);
         var objects = hdf.GetGroupObjectData("/");
 
-        Assert.Equal(3, objects.Length);
+        Assert.Equal(3, objects.Count);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class GetGroupObjectDataTests
         using var hdf = Hdf.Open(TestFiles.Structure);
         var objects = hdf.GetGroupObjectData("/groupA");
 
-        Assert.Equal(2, objects.Length);
+        Assert.Equal(2, objects.Count);
         var names = objects.Select(o => o.Name).ToHashSet();
         Assert.Contains("ds_a", names);
         Assert.Contains("sub",  names);
