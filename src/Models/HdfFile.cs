@@ -138,10 +138,17 @@ public sealed class HdfFile : IDisposable
 
         var typeId = H5D.get_type(datasetId);
 
+        // Read into the native in-memory representation of the file's datatype rather than
+        // the file datatype itself. Passing the file type as the memory type suppresses all
+        // conversion, so a big-endian (or otherwise non-native) file would read as
+        // byte-swapped garbage.
+        var nativeTypeId = H5T.get_native_type(typeId, H5T.direction_t.DEFAULT);
+
         unsafe
         {
-            if (H5T.get_size(typeId) != sizeof(TValue))
+            if (H5T.get_size(nativeTypeId) != sizeof(TValue))
             {
+                H5T.close(nativeTypeId);
                 H5T.close(typeId);
                 H5D.close(datasetId);
                 return null;
@@ -153,10 +160,11 @@ public sealed class HdfFile : IDisposable
         {
             fixed (TValue* bufferPtr = buffer)
             {
-                H5D.read(datasetId, typeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (nint)bufferPtr);
+                H5D.read(datasetId, nativeTypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (nint)bufferPtr);
             }
         }
 
+        H5T.close(nativeTypeId);
         H5T.close(typeId);
         H5D.close(datasetId);
 

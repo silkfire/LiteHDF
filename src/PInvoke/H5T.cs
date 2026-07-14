@@ -16,6 +16,27 @@ using System.Security;
 internal static partial class H5T
 {
     /// <summary>
+    /// The order to retrieve atomic native datatype.
+    /// </summary>
+    public enum direction_t
+    {
+        /// <summary>
+        /// Default direction is ascending.
+        /// </summary>
+        DEFAULT = 0,
+
+        /// <summary>
+        /// In ascending order.
+        /// </summary>
+        ASCEND = 1,
+
+        /// <summary>
+        /// In descending order.
+        /// </summary>
+        DESCEND = 2
+    }
+
+    /// <summary>
     /// Character set to use for text strings.
     /// </summary>
     public enum cset_t
@@ -127,6 +148,18 @@ internal static partial class H5T
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Tget_size"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial size_t get_size(hid_t type_id);
+
+    /// <summary>
+    /// Returns the native datatype identifier of a specified datatype.
+    /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5T.html#Datatype-GetNativeType" /> for further reference.</para>
+    /// </summary>
+    /// <param name="type_id">Identifier of datatype to query.</param>
+    /// <param name="direction">Direction of search.</param>
+    /// <returns>Returns the native datatype identifier if successful; otherwise returns a negative value.</returns>
+    /// <remarks>The returned datatype must be released with <see cref="close"/>.</remarks>
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Tget_native_type"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial hid_t get_native_type(hid_t type_id, direction_t direction);
 
     /// <summary>
     /// Determines whether a datatype is a variable-length string.

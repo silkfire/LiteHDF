@@ -275,4 +275,41 @@ public class GetDataTests
         Assert.NotNull(data);
         Assert.Equal("/i32", data.ToString());
     }
+
+    // ------------------------------------------------------------------
+    // Non-native byte order — must be converted, not read as raw bytes
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void GetData_big_endian_int32_is_byte_order_converted()
+    {
+        using var hdf = Hdf.Open(TestFiles.Endian);
+        var data = hdf.GetData<int>("/be_i32");
+
+        Assert.NotNull(data);
+        Assert.Equal([-2000000000, 0, 2000000000], data.Value);
+    }
+
+    [Fact]
+    public void GetData_big_endian_float64_is_byte_order_converted()
+    {
+        using var hdf = Hdf.Open(TestFiles.Endian);
+        var data = hdf.GetData<double>("/be_f64");
+
+        Assert.NotNull(data);
+        Assert.Equal([1.5, -3.25, 1e300], data.Value);
+    }
+
+    [Fact]
+    public void GetData_big_endian_matches_little_endian()
+    {
+        using var hdf = Hdf.Open(TestFiles.Endian);
+
+        var be = hdf.GetData<int>("/be_i32");
+        var le = hdf.GetData<int>("/le_i32");
+
+        Assert.NotNull(be);
+        Assert.NotNull(le);
+        Assert.Equal(le.Value, be.Value);
+    }
 }
