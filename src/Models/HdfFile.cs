@@ -99,90 +99,105 @@ public sealed class HdfFile : IDisposable
             return null;
         }
 
-        var dataspaceId = H5D.get_space(datasetId);
-
-        ulong totalLength;
+        TValue[] buffer;
 
         try
         {
-            var dataspaceClass = H5S.get_simple_extent_type(dataspaceId);
+            ulong totalLength;
 
-            switch (dataspaceClass)
+            var dataspaceId = H5D.get_space(datasetId);
+
+            try
             {
-                case H5S.class_t.NULL:
-                    totalLength = 0;
-                    break;
-                case H5S.class_t.SCALAR:
-                    totalLength = 1;
-                    break;
-                case H5S.class_t.SIMPLE:
-                    totalLength = 1;
+                var dataspaceClass = H5S.get_simple_extent_type(dataspaceId);
 
-                    var rank = H5S.get_simple_extent_ndims(dataspaceId);
-                    if (rank == 0)
+                switch (dataspaceClass)
+                {
+                    case H5S.class_t.NULL:
+                        totalLength = 0;
+                        break;
+                    case H5S.class_t.SCALAR:
+                        totalLength = 1;
+                        break;
+                    case H5S.class_t.SIMPLE:
+                        totalLength = 1;
+
+                        var rank = H5S.get_simple_extent_ndims(dataspaceId);
+                        if (rank == 0)
+                        {
+                            rank = 1;
+                        }
+
+                        var dimensionSizes = new ulong[rank];
+
+                        H5S.get_simple_extent_dims(dataspaceId, dimensionSizes, null);
+
+                        for (var i = rank; i > 0; i--)
+                        {
+                            totalLength *= dimensionSizes[i - 1];
+                        }
+
+                        break;
+                    case H5S.class_t.NO_CLASS:
+                    default:
+                        return null;
+                }
+            }
+            finally
+            {
+                H5S.close(dataspaceId);
+            }
+
+            var typeId = H5D.get_type(datasetId);
+
+            // Read into the native in-memory representation of the file's datatype rather than
+            // the file datatype itself. Passing the file type as the memory type suppresses all
+            // conversion, so a big-endian (or otherwise non-native) file would read as
+            // byte-swapped garbage.
+            var nativeTypeId = H5T.get_native_type(typeId, H5T.direction_t.DEFAULT);
+
+            try
+            {
+                unsafe
+                {
+                    if (H5T.get_size(nativeTypeId) != sizeof(TValue))
                     {
-                        rank = 1;
+                        return null;
+                    }
+                }
+
+                buffer = new TValue[totalLength];
+
+                // A NULL dataspace reads zero elements; a fixed on an empty array yields a
+                // null pointer, so skip the read entirely rather than pass H5Dread a null buffer.
+                if (totalLength > 0)
+                {
+                    int readResult;
+                    unsafe
+                    {
+                        fixed (TValue* bufferPtr = buffer)
+                        {
+                            readResult = H5D.read(datasetId, nativeTypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (nint)bufferPtr);
+                        }
                     }
 
-                    var dimensionSizes = new ulong[rank];
-
-                    H5S.get_simple_extent_dims(dataspaceId, dimensionSizes, null);
-
-                    for (var i = rank; i > 0; i--)
+                    if (readResult < 0)
                     {
-                        totalLength *= dimensionSizes[i - 1];
-                    }
+                        // A failed read otherwise returns a zeroed buffer indistinguishable from valid data.
 
-                    break;
-                case H5S.class_t.NO_CLASS:
-                default:
-                    H5D.close(datasetId);
-                    return null;
+                        throw new IOException($"Failed to read dataset: {datasetPath}");
+                    }
+                }
+            }
+            finally
+            {
+                H5T.close(nativeTypeId);
+                H5T.close(typeId);
             }
         }
         finally
         {
-            H5S.close(dataspaceId);
-        }
-
-        var typeId = H5D.get_type(datasetId);
-
-        // Read into the native in-memory representation of the file's datatype rather than
-        // the file datatype itself. Passing the file type as the memory type suppresses all
-        // conversion, so a big-endian (or otherwise non-native) file would read as
-        // byte-swapped garbage.
-        var nativeTypeId = H5T.get_native_type(typeId, H5T.direction_t.DEFAULT);
-
-        unsafe
-        {
-            if (H5T.get_size(nativeTypeId) != sizeof(TValue))
-            {
-                H5T.close(nativeTypeId);
-                H5T.close(typeId);
-                H5D.close(datasetId);
-                return null;
-            }
-        }
-
-        var buffer = new TValue[totalLength];
-        var readResult = 0;
-        unsafe
-        {
-            fixed (TValue* bufferPtr = buffer)
-            {
-                readResult = H5D.read(datasetId, nativeTypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (nint)bufferPtr);
-            }
-        }
-
-        H5T.close(nativeTypeId);
-        H5T.close(typeId);
-        H5D.close(datasetId);
-
-        if (readResult < 0)
-        {
-            // A failed read otherwise returns a zeroed buffer indistinguishable from valid data.
-
-            throw new IOException($"Failed to read dataset: {datasetPath}");
+            H5D.close(datasetId);
         }
 
         if (H5O.get_info_by_name(FileIdentifier, datasetPath, out var oinfo, H5O.H5O_INFO_BASIC | H5O.H5O_INFO_TIME, H5P.DEFAULT) < 0)
