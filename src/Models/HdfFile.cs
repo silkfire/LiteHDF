@@ -55,9 +55,13 @@ public sealed class HdfFile : IDisposable
         List<HdfObject> groupData = [];
 
         var idx = 0UL;
-        H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, name, _, _) =>
+        if (H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, name, _, _) =>
                                                                                                          {
-                                                                                                             H5O.get_info_by_name(FileIdentifier, $"{groupPath}/{name}", out var oinfo, H5O.H5O_INFO_BASIC, H5P.DEFAULT);
+                                                                                                             if (H5O.get_info_by_name(FileIdentifier, $"{groupPath}/{name}", out var oinfo, H5O.H5O_INFO_BASIC, H5P.DEFAULT) < 0)
+                                                                                                             {
+                                                                                                                 throw new IOException($"Failed to read object metadata: {groupPath}/{name}");
+                                                                                                             }
+
                                                                                                              groupData.Add(new HdfObject
                                                                                                                            {
                                                                                                                                Name = name,
@@ -65,7 +69,12 @@ public sealed class HdfFile : IDisposable
                                                                                                                                File = this
                                                                                                                            });
                                                                                                              return 0;
-                                                                                                         }, nint.Zero, H5P.DEFAULT);
+                                                                                                         }, nint.Zero, H5P.DEFAULT) < 0)
+        {
+            // A negative return distinguishes a nonexistent group from an empty one.
+
+            throw new IOException($"Failed to iterate group: {groupPath}");
+        }
 
         return groupData.ToArray();
     }
@@ -156,11 +165,12 @@ public sealed class HdfFile : IDisposable
         }
 
         var buffer = new TValue[totalLength];
+        var readResult = 0;
         unsafe
         {
             fixed (TValue* bufferPtr = buffer)
             {
-                H5D.read(datasetId, nativeTypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (nint)bufferPtr);
+                readResult = H5D.read(datasetId, nativeTypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, (nint)bufferPtr);
             }
         }
 
@@ -168,7 +178,17 @@ public sealed class HdfFile : IDisposable
         H5T.close(typeId);
         H5D.close(datasetId);
 
-        H5O.get_info_by_name(FileIdentifier, datasetPath, out var oinfo, H5O.H5O_INFO_BASIC | H5O.H5O_INFO_TIME, H5P.DEFAULT);
+        if (readResult < 0)
+        {
+            // A failed read otherwise returns a zeroed buffer indistinguishable from valid data.
+
+            throw new IOException($"Failed to read dataset: {datasetPath}");
+        }
+
+        if (H5O.get_info_by_name(FileIdentifier, datasetPath, out var oinfo, H5O.H5O_INFO_BASIC | H5O.H5O_INFO_TIME, H5P.DEFAULT) < 0)
+        {
+            throw new IOException($"Failed to read dataset metadata: {datasetPath}");
+        }
 
         return new HdfData<TValue>
                {

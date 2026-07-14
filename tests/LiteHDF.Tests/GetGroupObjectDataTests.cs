@@ -99,6 +99,19 @@ public class GetGroupObjectDataTests
     // Unsupported object type (named datatype) — must not throw
     // ------------------------------------------------------------------
 
+    // ------------------------------------------------------------------
+    // Nonexistent group — must throw rather than return an empty array
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void GetGroupObjectData_nonexistent_group_throws()
+    {
+        using var hdf = Hdf.Open(TestFiles.Structure);
+
+        // A failed iteration must be distinguishable from an empty group.
+        Assert.Throws<IOException>(() => hdf.GetGroupObjectData("/does_not_exist"));
+    }
+
     [Fact]
     public void GetGroupObjectData_named_datatype_maps_to_Unsupported_without_throwing()
     {
