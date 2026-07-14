@@ -1,6 +1,7 @@
 namespace LiteHDF.PInvoke;
 
 using herr_t = int;
+using htri_t = int;
 using hid_t = long;
 using size_t = nint;
 
@@ -126,4 +127,14 @@ internal static partial class H5T
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Tget_size"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial size_t get_size(hid_t type_id);
+
+    /// <summary>
+    /// Determines whether a datatype is a variable-length string.
+    /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5T.html#Datatype-IsVariableString" /> for further reference.</para>
+    /// </summary>
+    /// <param name="type_id">Identifier of datatype to query.</param>
+    /// <returns>Returns a positive value if the datatype is a variable-length string, zero if it is not, and a negative value on error.</returns>
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Tis_variable_str"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial htri_t is_variable_str(hid_t type_id);
 }

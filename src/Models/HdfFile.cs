@@ -188,19 +188,39 @@ public sealed class HdfFile : IDisposable
         }
 
         var datatypeId = H5D.get_type(datasetId);
+        var dataspaceId = H5D.get_space(datasetId);
 
-        var strPtr = nint.Zero;
+        try
+        {
+            // Only a single variable-length string element is supported. A multi-element
+            // dataspace would make H5Dread write one pointer per element into the single
+            // buffer slot below (a buffer overrun); a fixed-length string isn't a pointer
+            // at all. Guard against both instead of corrupting memory.
 
-        H5D.read(datasetId, datatypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, ref strPtr);
+            if (H5S.get_simple_extent_npoints(dataspaceId) != 1 || H5T.is_variable_str(datatypeId) <= 0)
+            {
+                return null;
+            }
 
-        var strValue = Marshal.PtrToStringUTF8(strPtr);
+            var strPtr = nint.Zero;
 
-        H5.free_memory(strPtr);
+            if (H5D.read(datasetId, datatypeId, H5S.ALL, H5S.ALL, H5P.DEFAULT, ref strPtr) < 0)
+            {
+                throw new IOException($"Failed to read string dataset: {datasetPath}");
+            }
 
-        H5T.close(datatypeId);
-        H5D.close(datasetId);
+            var strValue = Marshal.PtrToStringUTF8(strPtr);
 
-        return strValue;
+            H5.free_memory(strPtr);
+
+            return strValue;
+        }
+        finally
+        {
+            H5S.close(dataspaceId);
+            H5T.close(datatypeId);
+            H5D.close(datasetId);
+        }
     }
 
     /// <inheritdoc/>

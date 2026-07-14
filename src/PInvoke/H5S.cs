@@ -6,6 +6,7 @@ using System.Security;
 
 using herr_t = int;
 using hsize_t = ulong;
+using hssize_t = long;
 using hid_t = long;
 
 /// <summary>
@@ -75,6 +76,16 @@ internal static partial class H5S
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Sget_simple_extent_ndims"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial int get_simple_extent_ndims(hid_t space_id);
+
+    /// <summary>
+    /// Determines the number of elements in a dataspace.
+    /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5S.html#Dataspace-ExtentNpoints" /> for further reference.</para>
+    /// </summary>
+    /// <param name="space_id">Identifier of the dataspace object to query.</param>
+    /// <returns>Returns the number of elements in the dataspace if successful; otherwise returns a negative value.</returns>
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Sget_simple_extent_npoints"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial hssize_t get_simple_extent_npoints(hid_t space_id);
 
     /// <summary>
     /// Determines the current class of a dataspace.
