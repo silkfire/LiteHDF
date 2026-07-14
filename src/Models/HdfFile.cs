@@ -19,7 +19,7 @@ public sealed class HdfFile : IDisposable
                                                                                            [H5O.type_t.DATASET] = ObjectType.Dataset
                                                                                        }.AsReadOnly();
 
-    private bool _disposed;
+    private readonly Hdf5FileHandle _handle;
 
     static HdfFile()
     {
@@ -34,20 +34,22 @@ public sealed class HdfFile : IDisposable
     public string Filename { get; }
 
     /// <summary>
-    /// Native HDF5 file identifier returned by <c>H5Fopen</c>. Negative if the file failed to open.
+    /// Native HDF5 file identifier returned by <c>H5Fopen</c>.
     /// </summary>
-    public long FileIdentifier { get; }
+    public long FileIdentifier => _handle.FileId;
 
     internal HdfFile(string filepath)
     {
         Filename = Path.GetFileName(filepath);
 
-        FileIdentifier = H5F.open(filepath, H5F.ACC_RDONLY, H5P.DEFAULT);
+        var fileId = H5F.open(filepath, H5F.ACC_RDONLY, H5P.DEFAULT);
 
-        if (FileIdentifier < 0)
+        if (fileId < 0)
         {
             throw new IOException($"Failed to open HDF5 file: {filepath}");
         }
+
+        _handle = new Hdf5FileHandle(fileId);
     }
 
     /// <summary>
@@ -272,22 +274,8 @@ public sealed class HdfFile : IDisposable
     }
 
     /// <inheritdoc/>
-    ~HdfFile() => Dispose();
+    public void Dispose() => _handle.Dispose();
 
     /// <inheritdoc/>
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-
-        if (FileIdentifier >= 0L)
-        {
-            H5F.close(FileIdentifier);
-        }
-
-        GC.SuppressFinalize(this);
-    }
-
-    /// <inheritdoc/>
-    public override string ToString() => $"{Filename} | {(FileIdentifier < 0L ? "NULL" : FileIdentifier.ToString())}";
+    public override string ToString() => $"{Filename} | {(_handle.IsClosed || _handle.IsInvalid ? "NULL" : FileIdentifier.ToString())}";
 }
