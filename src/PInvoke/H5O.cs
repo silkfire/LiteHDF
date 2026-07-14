@@ -133,4 +133,19 @@ internal static partial class H5O
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Oget_info_by_name3"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     public static partial herr_t get_info_by_name(hid_t loc_id, [MarshalUsing(typeof(Utf8StringMarshaller))] string name, out info2_t oinfo, uint fields, hid_t lapl_id);
+
+    /// <summary>
+    /// Retrieves the metadata for an object specified by an identifier.
+    /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5O.html#Object-GetInfo" /> for further reference.</para>
+    /// </summary>
+    /// <param name="loc_id">Identifier of the object.</param>
+    /// <param name="oinfo">Buffer in which to return object information.</param>
+    /// <param name="fields">Flags specifying the fields to include in <paramref name="oinfo"/>.</param>
+    /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
+    /// <remarks>Uses the same <see cref="info2_t"/> struct as <see cref="get_info_by_name"/>; both pair with the
+    /// version-3 entry points. Prefer this over <see cref="get_info_by_name"/> when an object identifier is already
+    /// open, to avoid re-resolving the object's path.</remarks>
+    [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Oget_info3"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    public static partial herr_t get_info(hid_t loc_id, out info2_t oinfo, uint fields);
 }

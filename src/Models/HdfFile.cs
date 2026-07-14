@@ -62,9 +62,13 @@ public sealed class HdfFile : IDisposable
         List<HdfObject> groupData = [];
 
         var idx = 0UL;
-        if (H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (_, name, in _, _) =>
+        if (H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (group, name, in _, _) =>
                                                                                                          {
-                                                                                                             if (H5O.get_info_by_name(FileIdentifier, $"{groupPath}/{name}", out var oinfo, H5O.H5O_INFO_BASIC, H5P.DEFAULT) < 0)
+                                                                                                             // Look up each child by its relative name against the iteration-root
+                                                                                                             // group id the callback hands us, instead of re-resolving the full
+                                                                                                             // absolute path from the file root for every child (O(1) vs O(depth),
+                                                                                                             // and no per-child string allocation).
+                                                                                                             if (H5O.get_info_by_name(group, name, out var oinfo, H5O.H5O_INFO_BASIC, H5P.DEFAULT) < 0)
                                                                                                              {
                                                                                                                  throw new IOException($"Failed to read object metadata: {groupPath}/{name}");
                                                                                                              }
@@ -107,6 +111,7 @@ public sealed class HdfFile : IDisposable
         }
 
         TValue[] buffer;
+        ulong ctime;
 
         try
         {
@@ -203,21 +208,26 @@ public sealed class HdfFile : IDisposable
                 H5T.close(nativeTypeId);
                 H5T.close(typeId);
             }
+
+            // Query metadata by the already-open dataset identifier rather than by path
+            // (H5Oget_info3 vs H5Oget_info_by_name3): the path is already resolved, so this
+            // avoids a second full-path B-tree walk.
+            if (H5O.get_info(datasetId, out var oinfo, H5O.H5O_INFO_BASIC | H5O.H5O_INFO_TIME) < 0)
+            {
+                throw new IOException($"Failed to read dataset metadata: {datasetPath}");
+            }
+
+            ctime = oinfo.ctime;
         }
         finally
         {
             H5D.close(datasetId);
         }
 
-        if (H5O.get_info_by_name(FileIdentifier, datasetPath, out var oinfo, H5O.H5O_INFO_BASIC | H5O.H5O_INFO_TIME, H5P.DEFAULT) < 0)
-        {
-            throw new IOException($"Failed to read dataset metadata: {datasetPath}");
-        }
-
         return new HdfData<TValue>
                {
                    DatasetPath = datasetPath,
-                   ChangeTime = oinfo.ctime == 0 ? null : oinfo.ctime,
+                   ChangeTime = ctime == 0 ? null : ctime,
                    Value = buffer
                };
     }
