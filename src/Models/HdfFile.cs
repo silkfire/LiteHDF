@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 /// <summary>
@@ -59,28 +60,37 @@ public sealed class HdfFile : IDisposable
     /// <returns>A read-only collection of <see cref="HdfObject"/> describing each child object.</returns>
     public ReadOnlyCollection<HdfObject> GetGroupObjectData(string groupPath)
     {
-        List<HdfObject> groupData = [];
+        var state = new IterateState(this);
 
-        var idx = 0UL;
-        if (H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx, (group, name, in _, _) =>
-                                                                                                         {
-                                                                                                             // Look up each child by its relative name against the iteration-root
-                                                                                                             // group id the callback hands us, instead of re-resolving the full
-                                                                                                             // absolute path from the file root for every child (O(1) vs O(depth),
-                                                                                                             // and no per-child string allocation).
-                                                                                                             if (H5O.get_info_by_name(group, name, out var oinfo, H5O.H5O_INFO_BASIC, H5P.DEFAULT) < 0)
-                                                                                                             {
-                                                                                                                 throw new IOException($"Failed to read object metadata: {groupPath}/{name}");
-                                                                                                             }
+        // The callback is an unmanaged cdecl function pointer (no per-call delegate
+        // marshalling), so it cannot capture; the mutable accumulation state is passed
+        // through op_data as a pinned GCHandle and recovered inside the callback.
+        var stateHandle = GCHandle.Alloc(state);
 
-                                                                                                             groupData.Add(new HdfObject
-                                                                                                                           {
-                                                                                                                               Name = name,
-                                                                                                                               Type = s_objectTypes.GetValueOrDefault(oinfo.type, ObjectType.Unsupported),
-                                                                                                                               File = this
-                                                                                                                           });
-                                                                                                             return 0;
-                                                                                                         }, nint.Zero, H5P.DEFAULT) < 0)
+        int iterateResult;
+        try
+        {
+            var idx = 0UL;
+            unsafe
+            {
+                iterateResult = H5L.iterate_by_name(FileIdentifier, groupPath, H5.index_t.NAME, H5.iter_order_t.NATIVE, ref idx,
+                                                    &OnLink, GCHandle.ToIntPtr(stateHandle), H5P.DEFAULT);
+            }
+        }
+        finally
+        {
+            stateHandle.Free();
+        }
+
+        // A metadata-read failure inside the callback aborts iteration (negative return)
+        // and stashes the offending name rather than throwing across the native frame;
+        // re-throw it here from managed code.
+        if (state.FailedName is not null)
+        {
+            throw new IOException($"Failed to read object metadata: {groupPath}/{state.FailedName}");
+        }
+
+        if (iterateResult < 0)
         {
             // A negative return distinguishes a nonexistent group from an empty one.
 
@@ -88,7 +98,49 @@ public sealed class HdfFile : IDisposable
         }
 
         // Wrap the accumulated list in place (no element copy) as an immutable view.
-        return groupData.AsReadOnly();
+        return state.Objects.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Mutable state threaded through the unmanaged <see cref="H5L.iterate_by_name"/> callback via <c>op_data</c>.
+    /// </summary>
+    private sealed class IterateState(HdfFile file)
+    {
+        public HdfFile File { get; } = file;
+
+        public List<HdfObject> Objects { get; } = [];
+
+        /// <summary>Relative name of the child whose metadata read failed, or <see langword="null"/> if none did.</summary>
+        public string? FailedName { get; set; }
+    }
+
+    /// <summary>
+    /// Unmanaged cdecl operator for <see cref="H5L.iterate_by_name"/>, invoked once per child link. Recovers the
+    /// accumulation state from <paramref name="opData"/>, reads each child's metadata by its relative name against the
+    /// iteration-root <paramref name="group"/> id (O(1), no per-child path re-resolution or string allocation), and
+    /// records the result. Must not let a managed exception escape into the native frame.
+    /// </summary>
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static unsafe int OnLink(long group, byte* namePtr, H5L.info2_t* info, nint opData)
+    {
+        var state = (IterateState)GCHandle.FromIntPtr(opData).Target!;
+        var name = Marshal.PtrToStringUTF8((nint)namePtr)!;
+
+        if (H5O.get_info_by_name(group, name, out var oinfo, H5O.H5O_INFO_BASIC, H5P.DEFAULT) < 0)
+        {
+            // Signal failure to the managed caller and abort iteration; do not throw here.
+            state.FailedName = name;
+            return -1;
+        }
+
+        state.Objects.Add(new HdfObject
+                          {
+                              Name = name,
+                              Type = s_objectTypes.GetValueOrDefault(oinfo.type, ObjectType.Unsupported),
+                              File = state.File
+                          });
+
+        return 0;
     }
 
     /// <summary>

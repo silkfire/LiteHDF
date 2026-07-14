@@ -101,17 +101,6 @@ internal static partial class H5L
     }
 
     /// <summary>
-    /// Prototype for <see cref="iterate_by_name(hid_t,string,H5.index_t,H5.iter_order_t,ref hsize_t,iterate2_t,nint,hid_t)"/> operator.
-    /// </summary>
-    /// <param name="group">Group that serves as root of the iteration.</param>
-    /// <param name="name">Name of link, relative to <paramref name="group"/>, being examined at current step of the iteration.</param>
-    /// <param name="info">An <see cref="info2_t"/> struct containing information regarding that link. Native HDF5 passes this by pointer (<c>const H5L_info2_t *</c>), so it is declared <see langword="in"/>.</param>
-    /// <param name="op_data">User-defined pointer to data required by the application in processing the link.</param>
-    /// <returns>Zero causes the visit iterator to continue, returning zero when all group members have been processed. A positive value causes the visit iterator to immediately return that positive value, indicating short-circuit success. A negative value causes the visit iterator to immediately return that value, indicating failure.</returns>
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate herr_t iterate2_t(hid_t group, [MarshalUsing(typeof(Utf8StringMarshaller))] string name, in info2_t info, nint op_data);
-
-    /// <summary>
     /// Iterates through links in a group.
     /// <para>See <see href="https://support.hdfgroup.org/HDF5/doc/RM/RM_H5L.html#Link-IterateByName" /> for further reference.</para>
     /// </summary>
@@ -120,11 +109,18 @@ internal static partial class H5L
     /// <param name="idx_type">Type of index which determines the order.</param>
     /// <param name="order">Order within index.</param>
     /// <param name="idx">Iteration position at which to start.</param>
-    /// <param name="op">Callback function passing data regarding the link to the calling application.</param>
+    /// <param name="op">
+    /// Unmanaged cdecl callback invoked once per link, mirroring the C prototype
+    /// <c>herr_t (*H5L_iterate2_t)(hid_t group, const char *name, const H5L_info2_t *info, void *op_data)</c>:
+    /// <c>group</c> is the iteration-root group and <c>name</c> (a raw UTF-8 <c>byte*</c>) is relative to it;
+    /// <c>info</c> is an <see cref="info2_t"/>*. It must be a <c>[UnmanagedCallersOnly]</c> static method and must not
+    /// let a managed exception escape into the native frame. Return zero to continue, a positive value for
+    /// short-circuit success, or a negative value to abort with failure.
+    /// </param>
     /// <param name="op_data">User-defined pointer to data required by the application for its processing of the link.</param>
     /// <param name="lapl_id">Link access property list.</param>
     /// <returns>Returns a non-negative value if successful; otherwise returns a negative value.</returns>
     [LibraryImport(Constants.HDF5LibraryName, EntryPoint = "H5Literate_by_name2"), SuppressUnmanagedCodeSecurity, SecuritySafeCritical]
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
-    public static partial herr_t iterate_by_name(hid_t loc_id, [MarshalUsing(typeof(Utf8StringMarshaller))] string group_name, H5.index_t idx_type, H5.iter_order_t order, ref hsize_t idx, iterate2_t op, nint op_data, hid_t lapl_id);
+    public static unsafe partial herr_t iterate_by_name(hid_t loc_id, [MarshalUsing(typeof(Utf8StringMarshaller))] string group_name, H5.index_t idx_type, H5.iter_order_t order, ref hsize_t idx, delegate* unmanaged[Cdecl]<hid_t, byte*, info2_t*, nint, herr_t> op, nint op_data, hid_t lapl_id);
 }
